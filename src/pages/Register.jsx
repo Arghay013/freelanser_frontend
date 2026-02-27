@@ -212,8 +212,8 @@ export default function Register() {
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                       >
-                        <option value="BUYER">Buyer</option>
-                        <option value="SELLER">Seller</option>
+                        <option value="BUYER">BUYER</option>
+                        <option value="SELLER">SELLER</option>
                       </select>
                     </label>
 

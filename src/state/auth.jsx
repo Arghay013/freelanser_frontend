@@ -34,12 +34,30 @@ async function refreshAccess() {
   return data.access;
 }
 
+function normalizeMe(me) {
+  if (!me) return null;
+
+  const role =
+    me?.role ||
+    me?.profile?.role ||            
+    me?.user_role ||
+    me?.user_type ||
+    me?.account_type ||
+    "";
+
+  return {
+    ...me,
+    role,
+    is_email_verified:
+      me?.is_email_verified ?? me?.profile?.is_email_verified ?? false,
+  };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [booting, setBooting] = useState(true);
 
   const loadMe = async () => {
-    // token না থাকলে ME call করবো না
     const access = localStorage.getItem("access");
     const refresh = localStorage.getItem("refresh");
     if (!access && !refresh) {
@@ -49,14 +67,16 @@ export function AuthProvider({ children }) {
 
     try {
       const me = await api(ENDPOINTS.ME, { method: "GET" });
-      setUser(me);
-      return me;
+      const normalized = normalizeMe(me);
+      setUser(normalized);
+      return normalized;
     } catch (e) {
       try {
         await refreshAccess();
         const me2 = await api(ENDPOINTS.ME, { method: "GET" });
-        setUser(me2);
-        return me2;
+        const normalized2 = normalizeMe(me2);
+        setUser(normalized2);
+        return normalized2;
       } catch {
         setUser(null);
         clearTokens();
@@ -70,7 +90,7 @@ export function AuthProvider({ children }) {
       await loadMe();
       setBooting(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
   const login = async ({ username, password }) => {
@@ -83,8 +103,9 @@ export function AuthProvider({ children }) {
     saveTokens(tokens);
 
     const me = await api(ENDPOINTS.ME, { method: "GET" });
-    setUser(me);
-    return me;
+    const normalized = normalizeMe(me);
+    setUser(normalized);
+    return normalized;
   };
 
   const logout = () => {
