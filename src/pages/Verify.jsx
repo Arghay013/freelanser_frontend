@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { BadgeCheck, XCircle, Loader2 } from "lucide-react";
 
 const ENDPOINTS = {
-  VERIFY: "/api/auth/verify/", 
+  VERIFY: "/api/auth/verify/",
 };
 
 export default function Verify() {
@@ -34,25 +35,28 @@ export default function Verify() {
   }, [token]);
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10">
-      <div className="card bg-base-100 shadow">
-        <div className="card-body gap-4">
+    <div className="max-w-md mx-auto px-4 py-12">
+      <div className="card bg-base-100 shadow border border-base-200">
+        <div className="card-body gap-5">
           <h1 className="text-2xl font-bold">Email verification</h1>
 
           {status === "loading" && (
             <div className="alert">
+              <Loader2 className="animate-spin" size={18} />
               <span>Verifying…</span>
             </div>
           )}
 
           {status === "ok" && (
             <div className="alert alert-success">
+              <BadgeCheck size={18} />
               <span>{msg}</span>
             </div>
           )}
 
           {status === "err" && (
             <div className="alert alert-error">
+              <XCircle size={18} />
               <span>{msg}</span>
             </div>
           )}

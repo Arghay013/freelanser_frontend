@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
+import { UserPlus } from "lucide-react";
 
 const ENDPOINTS = {
   REGISTER: "/api/auth/register/",
@@ -9,8 +10,6 @@ const ENDPOINTS = {
 export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-
-  // ✅ backend expects BUYER / SELLER
   const [role, setRole] = useState("BUYER");
   const [password, setPassword] = useState("");
 
@@ -27,13 +26,8 @@ export default function Register() {
     try {
       await api(ENDPOINTS.REGISTER, {
         method: "POST",
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          role, // ✅ already uppercase
-        }),
-        auth: false, // ✅ register endpoint doesn't need token
+        body: JSON.stringify({ username, email, password, role }),
+        auth: false,
       });
 
       setOk("Registered! Please check your inbox and click the verification link.");
@@ -45,25 +39,23 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10">
-      <div className="card bg-base-100 shadow">
-        <div className="card-body gap-4">
-          <h1 className="text-2xl font-bold">Create account</h1>
-          <p className="text-base-content/70">
-            We’ll send a verification email. Only verified users can login.
-          </p>
-
-          {err ? (
-            <div className="alert alert-error">
-              <span>{err}</span>
+    <div className="max-w-md mx-auto px-4 py-12">
+      <div className="card bg-base-100 shadow border border-base-200">
+        <div className="card-body gap-5">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <UserPlus className="text-primary" size={18} />
             </div>
-          ) : null}
-
-          {ok ? (
-            <div className="alert alert-success">
-              <span>{ok}</span>
+            <div>
+              <h1 className="text-2xl font-bold">Create account</h1>
+              <p className="text-sm text-base-content/70">
+                We’ll send a verification email. Only verified users can login.
+              </p>
             </div>
-          ) : null}
+          </div>
+
+          {err ? <div className="alert alert-error">{err}</div> : null}
+          {ok ? <div className="alert alert-success">{ok}</div> : null}
 
           <form className="space-y-3" onSubmit={onSubmit}>
             <label className="form-control">
@@ -125,7 +117,14 @@ export default function Register() {
             </label>
 
             <button className="btn btn-primary w-full" disabled={loading}>
-              {loading ? "Creating..." : "Register"}
+              {loading ? (
+                <>
+                  <span className="loading loading-spinner loading-sm" />
+                  Creating...
+                </>
+              ) : (
+                "Register"
+              )}
             </button>
           </form>
 

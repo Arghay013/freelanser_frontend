@@ -1,97 +1,232 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Card from "../ui/Card";
 import { api } from "../lib/api";
 import { useAuth } from "../state/auth";
+import { Star, Clock, User, ShoppingCart, MessageSquareText } from "lucide-react";
 
 export default function ServiceDetail() {
   const { id } = useParams();
-  const { me } = useAuth();
+  const { user } = useAuth();
+
   const [service, setService] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reqText, setReqText] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/services/${id}/`).then(r => setService(r.data)).catch(()=>setService(null));
-    api.get(`/api/services/${id}/reviews/`).then(r => setReviews(r.data)).catch(()=>setReviews([]));
+    (async () => {
+      setLoading(true);
+      try {
+        const s = await api(`/api/services/${id}/`, { method: "GET" });
+        setService(s || null);
+      } catch {
+        setService(null);
+      }
+
+      try {
+        const r = await api(`/api/services/${id}/reviews/`, { method: "GET" });
+        const list = Array.isArray(r) ? r : (r?.results || []);
+        setReviews(list);
+      } catch {
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [id]);
+
+  const avgRating = useMemo(() => {
+    if (!reviews.length) return 0;
+    const sum = reviews.reduce((a, x) => a + Number(x.rating || 0), 0);
+    return sum / reviews.length;
+  }, [reviews]);
 
   const placeOrder = async () => {
     setMsg("");
+    setPlacing(true);
     try {
-      const r = await api.post("/api/orders/create/", { service_id: Number(id), buyer_requirements: reqText });
+      await api("/api/orders/create/", {
+        method: "POST",
+        body: JSON.stringify({ service_id: Number(id), buyer_requirements: reqText }),
+      });
       setMsg("✅ Order placed! Check your Buyer Dashboard.");
       setReqText("");
     } catch (e) {
-      const detail = e?.response?.data?.detail || "Failed. Make sure you are logged in as Buyer and your email is verified.";
+      const detail =
+        e?.message ||
+        "Failed. Make sure you are logged in as Buyer and your email is verified.";
       setMsg(String(detail));
+    } finally {
+      setPlacing(false);
     }
   };
 
-  if (!service) return <div className="mx-auto max-w-6xl px-4 py-8 text-slate-500">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <Card>
+          <div className="flex items-center gap-2 text-base-content/70">
+            <span className="loading loading-spinner loading-sm" />
+            Loading service...
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!service) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <Card>
+          <div className="text-base-content/70">Service not found.</div>
+          <Link to="/services" className="btn btn-sm btn-primary mt-3 w-fit">
+            Back to services
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
+  const role = user?.role;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 grid gap-4 md:grid-cols-3">
-      <div className="md:col-span-2">
-        <Card>
-          <div className="text-sm text-slate-500">{service.category} • {service.delivery_time_days} days</div>
-          <div className="text-2xl font-bold">{service.title}</div>
-          <div className="mt-2 text-slate-700">{service.description}</div>
+    <div className="mx-auto max-w-6xl px-4 py-12 grid gap-5 lg:grid-cols-3">
+      {/* LEFT */}
+      <div className="lg:col-span-2 space-y-5">
+        <Card className="overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/70">
+                <span className="badge badge-outline">{service.category || "General"}</span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock size={14} /> {service.delivery_time_days ?? "—"} days
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <User size={14} /> {service.seller?.username || "Seller"}
+                </span>
+              </div>
+
+              <h1 className="text-3xl font-extrabold mt-3">{service.title}</h1>
+              <p className="text-base-content/70 mt-2 leading-relaxed">
+                {service.description}
+              </p>
+
+              <div className="mt-4 flex items-center gap-2">
+                <div className="badge badge-primary badge-outline">
+                  <Star size={14} className="mr-1" />
+                  {avgRating ? avgRating.toFixed(1) : "New"}
+                </div>
+                <div className="text-sm text-base-content/60">
+                  {reviews.length ? `${reviews.length} reviews` : "No reviews yet"}
+                </div>
+              </div>
+            </div>
+
+            <div className="sm:text-right">
+              <div className="text-xs text-base-content/60">Starting at</div>
+              <div className="text-4xl font-extrabold">${service.price}</div>
+              <div className="text-xs text-base-content/60 mt-1">Secure order • Clear status</div>
+            </div>
+          </div>
 
           {service.requirements && (
-            <div className="mt-4 rounded-lg border bg-slate-50 p-3">
+            <div className="mt-5 rounded-2xl bg-base-200 p-5">
               <div className="text-sm font-semibold">Requirements</div>
-              <div className="text-sm text-slate-700">{service.requirements}</div>
+              <div className="text-sm text-base-content/80 mt-2 leading-relaxed">
+                {service.requirements}
+              </div>
             </div>
           )}
-
-          <div className="mt-4 text-xs text-slate-500">Seller: {service.seller?.username}</div>
         </Card>
 
-        <div className="mt-4">
-          <Card>
-            <div className="font-semibold mb-2">Reviews</div>
-            <div className="grid gap-3">
-              {reviews.map(r => (
-                <div key={r.id} className="rounded-lg border p-3">
-                  <div className="text-sm"><b>{r.rating}/5</b> • by {r.buyer?.username}</div>
-                  <div className="text-sm text-slate-700">{r.comment || "—"}</div>
+        {/* REVIEWS */}
+        <Card title="Reviews">
+          <div className="grid gap-3">
+            {reviews.map((r) => (
+              <div key={r.id} className="rounded-2xl border border-base-200 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    <span className="font-bold">{r.rating}/5</span>{" "}
+                    <span className="text-base-content/60">by</span>{" "}
+                    <span className="font-medium">{r.buyer?.username || "Buyer"}</span>
+                  </div>
+                  <span className="badge badge-outline">{service.category || "General"}</span>
                 </div>
-              ))}
-              {reviews.length === 0 && <div className="text-sm text-slate-500">No reviews yet.</div>}
-            </div>
-          </Card>
-        </div>
+                <div className="text-sm text-base-content/80 mt-2">
+                  {r.comment || "—"}
+                </div>
+              </div>
+            ))}
+            {reviews.length === 0 && (
+              <div className="text-sm text-base-content/70">No reviews yet.</div>
+            )}
+          </div>
+        </Card>
       </div>
 
-      <div className="md:col-span-1">
-        <Card>
-          <div className="text-xs text-slate-500">Price</div>
-          <div className="text-3xl font-bold">${service.price}</div>
-
-          {me?.profile?.role === "BUYER" ? (
+      {/* RIGHT */}
+      <div className="lg:col-span-1">
+        <Card
+          title="Place order"
+          actions={<ShoppingCart size={18} className="opacity-70" />}
+        >
+          {role === "BUYER" ? (
             <>
-              <div className="mt-3 text-sm font-semibold">Place Order</div>
-              <textarea value={reqText} onChange={e=>setReqText(e.target.value)}
-                placeholder="Tell the seller what you need..."
-                className="mt-2 w-full rounded-md border p-2 text-sm" rows={5} />
-              <button onClick={placeOrder}
-                className="mt-3 w-full rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-800">
-                Place Order
+              <div className="text-sm text-base-content/70">
+                Add a short note for the seller (requirements, references, etc.)
+              </div>
+
+              <label className="form-control mt-3">
+                <div className="label">
+                  <span className="label-text flex items-center gap-2">
+                    <MessageSquareText size={16} /> Your note
+                  </span>
+                </div>
+                <textarea
+                  value={reqText}
+                  onChange={(e) => setReqText(e.target.value)}
+                  placeholder="Tell the seller what you need..."
+                  className="textarea textarea-bordered min-h-[140px]"
+                />
+              </label>
+
+              <button
+                onClick={placeOrder}
+                disabled={placing}
+                className="btn btn-primary w-full mt-4"
+              >
+                {placing ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm" />
+                    Placing...
+                  </>
+                ) : (
+                  "Place Order"
+                )}
               </button>
+
+              <div className="mt-3 text-xs text-base-content/60">
+                Tip: Check Buyer Dashboard after placing order.
+              </div>
             </>
           ) : (
-            <div className="mt-3 text-sm text-slate-600">
+            <div className="text-sm text-base-content/70">
               Login as <b>Buyer</b> to place order.
-              <div className="mt-2 flex gap-2">
-                <Link to="/login" className="rounded-md border px-3 py-1.5 hover:bg-slate-50">Login</Link>
-                <Link to="/register" className="rounded-md bg-slate-900 px-3 py-1.5 text-white hover:bg-slate-800">Register</Link>
+              <div className="mt-3 flex gap-2">
+                <Link to="/login" className="btn btn-outline btn-sm">Login</Link>
+                <Link to="/register" className="btn btn-primary btn-sm">Register</Link>
               </div>
             </div>
           )}
 
-          {msg && <div className="mt-3 text-sm text-slate-700">{msg}</div>}
+          {msg && (
+            <div className="mt-4 alert">
+              <span>{msg}</span>
+            </div>
+          )}
         </Card>
       </div>
     </div>

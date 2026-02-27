@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 
 const categories = [
-  { title: "Graphic Design", desc: "Logos, branding, UI kits", img: "/images/cat-design.jpg", tag: "Design" },
-  { title: "Web Development", desc: "React, Django, APIs", img: "/images/cat-dev.jpg", tag: "Development" },
-  { title: "Writing & Translation", desc: "Blog, copy, CV", img: "/images/cat-writing.jpg", tag: "Writing" },
-  { title: "Video & Motion", desc: "Edits, reels, ads", img: "/images/cat-video.jpg", tag: "Video" },
+  { title: "Graphic Design", desc: "Logos, branding, UI kits", img: "/images/cat-design.jpg", tag: "Design", key: "Graphic Design" },
+  { title: "Web Development", desc: "React, Django, APIs", img: "/images/cat-dev.jpg", tag: "Development", key: "Web Development" },
+  { title: "Writing & Translation", desc: "Blog, copy, CV", img: "/images/cat-writing.jpg", tag: "Writing", key: "Writing & Translation" },
+  { title: "Video & Motion", desc: "Edits, reels, ads", img: "/images/cat-video.jpg", tag: "Video", key: "Video & Motion" },
 ];
 
 const featured = [
@@ -22,9 +22,9 @@ const testimonials = [
 export default function Home() {
   return (
     <div className="bg-base-200/30">
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-16">
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-16">
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-3xl bg-base-100 shadow">
+        <section className="relative overflow-hidden rounded-3xl bg-base-100 shadow border border-base-200">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
             <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-secondary/15 blur-3xl" />
@@ -41,7 +41,7 @@ export default function Home() {
                 Find the right freelancer for your next project
               </h1>
               <p className="mt-4 text-base-content/70 max-w-xl">
-                Browse services, compare portfolios, and start working today. Simple checkout, clear delivery, and secure accounts.
+                Browse services, compare sellers, and start working today. Simple checkout, clear delivery, and secure accounts.
               </p>
 
               <div className="mt-7 flex flex-col sm:flex-row gap-3">
@@ -78,9 +78,9 @@ export default function Home() {
                 alt="FreelancerHub hero"
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/55 via-black/15 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/15 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
-                <div className="bg-base-100/85 backdrop-blur rounded-2xl p-4 shadow">
+                <div className="bg-base-100/85 backdrop-blur rounded-2xl p-4 shadow border border-base-200/50">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="font-semibold">Today’s highlight</div>
@@ -112,12 +112,12 @@ export default function Home() {
             {categories.map((c) => (
               <Link
                 key={c.title}
-                to="/services"
-                className="group card bg-base-100 shadow hover:shadow-xl transition"
+                to={`/services?cat=${encodeURIComponent(c.key)}`}
+                className="group card bg-base-100 shadow-sm border border-base-200 hover:shadow-xl transition"
               >
                 <figure className="h-40 relative">
                   <img src={c.img} alt={c.title} className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent opacity-0 group-hover:opacity-100 transition" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition" />
                 </figure>
                 <div className="card-body">
                   <div className="flex items-center justify-between gap-2">
@@ -132,7 +132,7 @@ export default function Home() {
         </section>
 
         {/* FEATURED */}
-        <section className="rounded-3xl bg-base-100 shadow overflow-hidden">
+        <section className="rounded-3xl bg-base-100 shadow border border-base-200 overflow-hidden">
           <div className="grid lg:grid-cols-2">
             <div className="p-8 sm:p-12">
               <h2 className="text-2xl font-bold">Featured services</h2>
@@ -174,51 +174,17 @@ export default function Home() {
 
             <div className="relative min-h-[260px] lg:min-h-full">
               <img src="/images/services.jpg" alt="Services banner" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/55 via-black/10 to-transparent" />
-            </div>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
-        <section className="rounded-3xl bg-base-100 shadow p-8 sm:p-12">
-          <h2 className="text-2xl font-bold">How it works</h2>
-          <p className="text-base-content/70 mt-1">Three simple steps, no confusion.</p>
-
-          <ul className="steps steps-vertical lg:steps-horizontal mt-6 w-full">
-            <li className="step step-primary">Create account</li>
-            <li className="step step-primary">Choose a service</li>
-            <li className="step">Place order</li>
-            <li className="step">Chat & deliver</li>
-          </ul>
-
-          <div className="mt-6 grid md:grid-cols-3 gap-5">
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h3 className="card-title">Verified login</h3>
-                <p className="text-sm text-base-content/70">Email verification keeps accounts safer and reduces spam.</p>
-              </div>
-            </div>
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h3 className="card-title">Clear order status</h3>
-                <p className="text-sm text-base-content/70">Pending → In progress → Completed. No guessing.</p>
-              </div>
-            </div>
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h3 className="card-title">Simple API</h3>
-                <p className="text-sm text-base-content/70">Swagger docs included. Easy to test and extend.</p>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/10 to-transparent" />
             </div>
           </div>
         </section>
 
         {/* TESTIMONIALS */}
-        <section className="rounded-3xl bg-base-100 shadow overflow-hidden">
+        <section className="rounded-3xl bg-base-100 shadow border border-base-200 overflow-hidden">
           <div className="grid lg:grid-cols-2">
             <div className="relative min-h-[260px] lg:min-h-full">
               <img src="/images/testimonials.jpg" alt="Testimonials" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/55 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/10 to-transparent" />
             </div>
 
             <div className="p-8 sm:p-12">
@@ -248,14 +214,14 @@ export default function Home() {
         </section>
 
         {/* CTA */}
-        <section className="rounded-3xl overflow-hidden shadow bg-base-100">
+        <section className="rounded-3xl overflow-hidden shadow border border-base-200 bg-base-100">
           <div className="relative">
             <img src="/images/cta.jpg" alt="CTA" className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-black/55" />
+            <div className="absolute inset-0 bg-black/60" />
             <div className="relative p-8 sm:p-12 text-white">
               <h2 className="text-3xl font-extrabold">Ready to build something?</h2>
-              <p className="mt-2 text-white/80 max-w-xl">
-                Do something new.
+              <p className="mt-2 text-white/85 max-w-xl">
+                Post a gig, hire a specialist, and ship faster. Simple. Clean. Reliable.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -268,7 +234,7 @@ export default function Home() {
               </div>
 
               <div className="mt-6 text-sm text-white/70">
-                join with <code className="px-1 py-0.5 bg-white/10 rounded">US</code> to buid your idea.
+                Join with <code className="px-1 py-0.5 bg-white/10 rounded">FreelancerHub</code> and build your idea.
               </div>
             </div>
           </div>
