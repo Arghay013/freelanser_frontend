@@ -119,73 +119,82 @@ export default function Services() {
       </div>
 
       {/* FILTER BAR */}
-      <Card className="shadow-sm" title="Filters" actions={<SlidersHorizontal size={18} className="opacity-70" />}>
-        <div className="grid md:grid-cols-4 gap-3">
-          <label className="form-control md:col-span-2">
-            <div className="label">
-              <span className="label-text flex items-center gap-2">
-                <Search size={16} /> Search
-              </span>
-            </div>
-            <input
-              className="input input-bordered"
-              placeholder="Search title, category, seller..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </label>
+      <Card className="shadow-md">
+  <div className="grid md:grid-cols-4 gap-6">
+    
+    {/* Search */}
+    <label className="form-control md:col-span-2">
+      <div className="label mb-1">
+        <span className="label-text">Search</span>
+      </div>
+      <input
+        className="input input-bordered h-11 px-4"
+        placeholder="Search title, category, seller..."
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+    </label>
 
-          <label className="form-control">
-            <div className="label">
-              <span className="label-text flex items-center gap-2">
-                <Tag size={16} /> Category
-              </span>
-            </div>
-            <select className="select select-bordered" value={cat} onChange={(e) => setCat(e.target.value)}>
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </label>
+    {/* Category */}
+    <label className="form-control">
+      <div className="label mb-1">
+        <span className="label-text">Category</span>
+      </div>
+      <select
+        className="select select-bordered h-11 px-3"
+        value={cat}
+        onChange={(e) => setCat(e.target.value)}
+      >
+        {categories.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
+    </label>
 
-          <label className="form-control">
-            <div className="label">
-              <span className="label-text flex items-center gap-2">
-                <Star size={16} /> Sort
-              </span>
-            </div>
-            <select className="select select-bordered" value={sort} onChange={(e) => setSort(e.target.value)}>
-              <option value="top">Top rated</option>
-              <option value="price_low">Price: low → high</option>
-              <option value="price_high">Price: high → low</option>
-            </select>
-          </label>
-        </div>
+    {/* Sort */}
+    <label className="form-control">
+      <div className="label mb-1">
+        <span className="label-text">Sort</span>
+      </div>
+      <select
+        className="select select-bordered h-11 px-3"
+        value={sort}
+        onChange={(e) => setSort(e.target.value)}
+      >
+        <option value="top">Top rated</option>
+        <option value="price_low">Price: low → high</option>
+        <option value="price_high">Price: high → low</option>
+      </select>
+    </label>
+  </div>
 
-        <div className="grid md:grid-cols-2 gap-3">
-          <label className="form-control">
-            <div className="label"><span className="label-text">Min price</span></div>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={minP}
-              onChange={(e) => setMinP(Number(e.target.value || 0))}
-              min={0}
-            />
-          </label>
+  {/* Price inputs */}
+  <div className="grid md:grid-cols-2 gap-6 mt-6">
+    <label className="form-control">
+      <div className="label mb-1">
+        <span className="label-text">Min price</span>
+      </div>
+      <input
+        type="number"
+        className="input input-bordered h-11 px-4"
+        value={minP}
+        onChange={(e) => setMinP(Number(e.target.value || 0))}
+      />
+    </label>
 
-          <label className="form-control">
-            <div className="label"><span className="label-text">Max price</span></div>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={maxP}
-              onChange={(e) => setMaxP(Number(e.target.value || 0))}
-              min={0}
-            />
-          </label>
-        </div>
-      </Card>
+    <label className="form-control">
+      <div className="label mb-1">
+        <span className="label-text">Max price</span>
+      </div>
+      <input
+        type="number"
+        className="input input-bordered h-11 px-4"
+        value={maxP}
+        onChange={(e) => setMaxP(Number(e.target.value || 0))}
+      />
+    </label>
+  </div>
+</Card>
 
       {/* ERROR / LOADING */}
       {loading && (
@@ -203,7 +212,14 @@ export default function Services() {
         <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {pageItems.map((s) => (
-              <div key={s.id} className="card bg-base-100 shadow-sm border border-base-200 hover:shadow-lg transition">
+              <div
+                key={s.id}
+                className="card bg-base-100 border border-base-200 
+                shadow-md shadow-black/10 
+                hover:shadow-xl hover:shadow-black/20 
+                hover:-translate-y-1 
+                transition-all duration-200"
+              >
                 <figure className="h-44">
                   <img src={s.img} alt={s.title} className="h-full w-full object-cover" />
                 </figure>

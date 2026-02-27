@@ -63,7 +63,7 @@ function RequireAuth({ children, role }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-base-200/30">
+    <div className="min-h-screen bg-base-200/70">
       <Navbar />
 
       <main className="min-h-[70vh]">

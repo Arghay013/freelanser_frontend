@@ -1,17 +1,19 @@
 import React from "react";
 
-export default function Card({ children, className = "", title, actions }) {
+export default function Card({ children, className = "" }) {
   return (
-    <div className={`card bg-base-100 shadow-sm border border-base-200 ${className}`}>
-      <div className="card-body gap-4">
-        {(title || actions) && (
-          <div className="flex items-start justify-between gap-3">
-            {title ? <h2 className="card-title text-lg">{title}</h2> : <div />}
-            {actions ? <div className="shrink-0">{actions}</div> : null}
-          </div>
-        )}
-        {children}
-      </div>
+    <div
+      className={[
+        "rounded-2xl bg-base-100 border border-base-200",
+        // 👇 LIGHT MODE এ strong shadow
+        "shadow-md shadow-black/10",
+        // 👇 HOVER এ আরো lift effect
+        "hover:shadow-lg hover:shadow-black/20",
+        "transition-all duration-200",
+        className,
+      ].join(" ")}
+    >
+      <div className="p-5">{children}</div>
     </div>
   );
 }
