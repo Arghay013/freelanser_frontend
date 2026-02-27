@@ -66,7 +66,7 @@ export default function App() {
     <div className="min-h-screen bg-base-200/70">
       <Navbar />
 
-      <main className="min-h-[70vh]">
+      <main className="min-h-[70vh] py-6">
         <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
