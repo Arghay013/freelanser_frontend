@@ -5,6 +5,25 @@ import { api } from "../lib/api";
 import { useAuth } from "../state/auth";
 import { Star, Clock, User, ShoppingCart, MessageSquareText } from "lucide-react";
 
+function cleanErrorMessage(err) {
+  let m =
+    err?.message ||
+    err?.data?.detail ||
+    err?.data?.message ||
+    "Failed. Please try again.";
+
+  m = String(m);
+
+  // If backend returns HTML error page (500), keep it readable
+  if (m.includes("<!doctype html") || m.includes("<html")) {
+    return "Server error (500). Backend crashed while creating order. Please try again, or check backend logs.";
+  }
+
+  // Too long message safety
+  if (m.length > 220) m = m.slice(0, 220) + "…";
+  return m;
+}
+
 export default function ServiceDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -13,12 +32,14 @@ export default function ServiceDetail() {
   const [reviews, setReviews] = useState([]);
   const [reqText, setReqText] = useState("");
   const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState("info"); // info | success | error
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
+
       try {
         const s = await api(`/api/services/${id}/`, { method: "GET" });
         setService(s || null);
@@ -28,7 +49,7 @@ export default function ServiceDetail() {
 
       try {
         const r = await api(`/api/services/${id}/reviews/`, { method: "GET" });
-        const list = Array.isArray(r) ? r : (r?.results || []);
+        const list = Array.isArray(r) ? r : r?.results || [];
         setReviews(list);
       } catch {
         setReviews([]);
@@ -44,21 +65,64 @@ export default function ServiceDetail() {
     return sum / reviews.length;
   }, [reviews]);
 
+  const role = user?.role || user?.profile?.role; // safety: in case role is nested
+
   const placeOrder = async () => {
     setMsg("");
+    setMsgType("info");
+
+    if (!user) {
+      setMsgType("error");
+      setMsg("Please login first.");
+      return;
+    }
+    if (role !== "BUYER") {
+      setMsgType("error");
+      setMsg("Login as BUYER to place order.");
+      return;
+    }
+
     setPlacing(true);
+
+    const serviceIdNum = Number(id);
+    const note = (reqText || "").trim();
+
+    // ✅ Try common payload shapes (backend mismatch safe)
+    const payloads = [
+      { service: serviceIdNum, buyer_requirements: note },
+      { service_id: serviceIdNum, buyer_requirements: note },
+      { service: serviceIdNum, requirements: note },
+      { service_id: serviceIdNum, requirements: note },
+    ];
+
+    let lastErr = null;
+
     try {
-      await api("/api/orders/create/", {
-        method: "POST",
-        body: JSON.stringify({ service_id: Number(id), buyer_requirements: reqText }),
-      });
-      setMsg("✅ Order placed! Check your Buyer Dashboard.");
-      setReqText("");
+      for (const body of payloads) {
+        try {
+          await api("/api/orders/create/", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+
+          setMsgType("success");
+          setMsg("✅ Order placed! Check your Buyer Dashboard.");
+          setReqText("");
+          return;
+        } catch (e) {
+          lastErr = e;
+          // keep trying next payload
+        }
+      }
+
+      // all payloads failed
+      throw lastErr || new Error("Order failed");
     } catch (e) {
-      const detail =
-        e?.message ||
-        "Failed. Make sure you are logged in as Buyer and your email is verified.";
-      setMsg(String(detail));
+      setMsgType("error");
+      setMsg(
+        cleanErrorMessage(e) ||
+          "Failed. Make sure you are logged in as Buyer and your email is verified."
+      );
     } finally {
       setPlacing(false);
     }
@@ -89,8 +153,6 @@ export default function ServiceDetail() {
       </div>
     );
   }
-
-  const role = user?.role;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 grid gap-5 lg:grid-cols-3">
@@ -155,11 +217,10 @@ export default function ServiceDetail() {
                   </div>
                   <span className="badge badge-outline">{service.category || "General"}</span>
                 </div>
-                <div className="text-sm text-base-content/80 mt-2">
-                  {r.comment || "—"}
-                </div>
+                <div className="text-sm text-base-content/80 mt-2">{r.comment || "—"}</div>
               </div>
             ))}
+
             {reviews.length === 0 && (
               <div className="text-sm text-base-content/70">No reviews yet.</div>
             )}
@@ -169,10 +230,7 @@ export default function ServiceDetail() {
 
       {/* RIGHT */}
       <div className="lg:col-span-1">
-        <Card
-          title="Place order"
-          actions={<ShoppingCart size={18} className="opacity-70" />}
-        >
+        <Card title="Place order" actions={<ShoppingCart size={18} className="opacity-70" />}>
           {role === "BUYER" ? (
             <>
               <div className="text-sm text-base-content/70">
@@ -193,11 +251,7 @@ export default function ServiceDetail() {
                 />
               </label>
 
-              <button
-                onClick={placeOrder}
-                disabled={placing}
-                className="btn btn-primary w-full mt-4"
-              >
+              <button onClick={placeOrder} disabled={placing} className="btn btn-primary w-full mt-4">
                 {placing ? (
                   <>
                     <span className="loading loading-spinner loading-sm" />
@@ -216,14 +270,18 @@ export default function ServiceDetail() {
             <div className="text-sm text-base-content/70">
               Login as <b>Buyer</b> to place order.
               <div className="mt-3 flex gap-2">
-                <Link to="/login" className="btn btn-outline btn-sm">Login</Link>
-                <Link to="/register" className="btn btn-primary btn-sm">Register</Link>
+                <Link to="/login" className="btn btn-outline btn-sm">
+                  Login
+                </Link>
+                <Link to="/register" className="btn btn-primary btn-sm">
+                  Register
+                </Link>
               </div>
             </div>
           )}
 
           {msg && (
-            <div className="mt-4 alert">
+            <div className={`mt-4 alert ${msgType === "success" ? "alert-success" : msgType === "error" ? "alert-error" : ""}`}>
               <span>{msg}</span>
             </div>
           )}
