@@ -10,6 +10,7 @@ export default function SellerDashboard() {
 
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("web"); // ✅ default
   const [error, setError] = useState("");
 
   const loadMyServices = async () => {
@@ -30,14 +31,14 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     loadMyServices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username]);
 
   const addService = async () => {
     try {
       setError("");
+
       if (!title.trim()) return setError("Title is required");
-      if (!price || isNaN(Number(price))) return setError("Valid price is required");
+      if (!price || isNaN(Number(price))) return setError("Valid price required");
 
       await api("/api/services/", {
         method: "POST",
@@ -46,13 +47,14 @@ export default function SellerDashboard() {
           price: Number(price),
           description: "New service",
           requirements: "",
-          category: "General",
+          category: category, // ✅ dynamic এখন
           delivery_time_days: 3,
         }),
       });
 
       setTitle("");
       setPrice("");
+      setCategory("web"); // reset
       await loadMyServices();
     } catch (e) {
       setError(e?.message || "Failed to create service");
@@ -61,11 +63,10 @@ export default function SellerDashboard() {
 
   const deleteService = async (id) => {
     try {
-      setError("");
       await api(`/api/services/${id}/manage/`, { method: "DELETE" });
       await loadMyServices();
     } catch (e) {
-      setError(e?.message || "Failed to delete service");
+      setError(e?.message || "Delete failed");
     }
   };
 
@@ -73,8 +74,10 @@ export default function SellerDashboard() {
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Seller Dashboard</h1>
 
-      <div className="flex gap-4 items-end mb-6">
-        <div className="flex-1">
+      <div className="flex gap-4 items-end mb-6 flex-wrap">
+        
+        {/* TITLE */}
+        <div className="flex-1 min-w-[200px]">
           <label className="label"><span className="label-text">Title</span></label>
           <input
             className="input input-bordered w-full"
@@ -84,48 +87,65 @@ export default function SellerDashboard() {
           />
         </div>
 
-        <div className="w-56">
+        {/* PRICE */}
+        <div className="w-40">
           <label className="label"><span className="label-text">Price</span></label>
           <input
             className="input input-bordered w-full"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="e.g. 50"
+            placeholder="50"
           />
         </div>
 
+        {/* CATEGORY DROPDOWN */}
+        <div className="w-52">
+          <label className="label"><span className="label-text">Category</span></label>
+          <select
+            className="select select-bordered w-full"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="web">Web Development</option>
+            <option value="design">Design</option>
+            <option value="video">Video Editing</option>
+          </select>
+        </div>
+
+        {/* BUTTON */}
         <button className="btn btn-primary" onClick={addService}>
           Add
         </button>
       </div>
 
-      {error ? (
+      {error && (
         <div className="alert alert-error mb-4">
           <span>{error}</span>
         </div>
-      ) : null}
+      )}
 
       {loading ? (
-        <p className="opacity-70">Loading...</p>
+        <p>Loading...</p>
       ) : (
         <div className="space-y-3">
-          {services.length === 0 ? (
-            <p className="opacity-70">No services yet.</p>
-          ) : (
-            services.map((s) => (
-              <div key={s.id} className="card bg-base-100 shadow p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold">{s.title}</h3>
-                    <p className="opacity-70">${s.price}</p>
-                  </div>
-                  <button className="btn btn-error btn-sm" onClick={() => deleteService(s.id)}>
-                    Delete
-                  </button>
+          {services.map((s) => (
+            <div key={s.id} className="card bg-base-100 shadow p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold">{s.title}</h3>
+                  <p>${s.price}</p>
+                  <p className="text-sm opacity-70">{s.category}</p>
                 </div>
+
+                <button
+                  className="btn btn-error btn-sm"
+                  onClick={() => deleteService(s.id)}
+                >
+                  Delete
+                </button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
