@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/auth";
-import { Briefcase, Bell, LogIn, UserPlus, User, LogOut, Menu } from "lucide-react";
+import { Briefcase, Bell, LogIn, UserPlus, User, LogOut, Menu, LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const NavItem = ({ to, icon: Icon, children }) => (
@@ -23,6 +23,10 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [dark, setDark] = useState(false);
+
+  // ✅ dashboard route based on role
+  const dashboardPath =
+    user?.role === "BUYER" ? "/buyer" : user?.role === "SELLER" ? "/seller" : "/profile";
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") || "light";
@@ -55,13 +59,12 @@ export default function Navbar() {
             >
               <NavItem to="/services" icon={Briefcase}>Services</NavItem>
 
+              {user && <NavItem to={dashboardPath} icon={LayoutDashboard}>Dashboard</NavItem>}
+              {user && <NavItem to="/notifications" icon={Bell}>Notifications</NavItem>}
+              {user && <NavItem to="/profile" icon={User}>Profile</NavItem>}
+
               {!user && <NavItem to="/login" icon={LogIn}>Login</NavItem>}
               {!user && <NavItem to="/register" icon={UserPlus}>Register</NavItem>}
-
-              {user && <NavItem to="/profile" icon={User}>Profile</NavItem>}
-              {user?.role === "BUYER" && <NavItem to="/buyer" icon={User}>Dashboard</NavItem>}
-              {user?.role === "SELLER" && <NavItem to="/seller" icon={User}>Dashboard</NavItem>}
-              {user && <NavItem to="/notifications" icon={Bell}>Notifications</NavItem>}
             </ul>
           </div>
 
@@ -82,6 +85,10 @@ export default function Navbar() {
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal gap-1 px-1">
             <NavItem to="/services" icon={Briefcase}>Services</NavItem>
+
+            {/* ✅ DASHBOARD BUTTON (Desktop) */}
+            {user && <NavItem to={dashboardPath} icon={LayoutDashboard}>Dashboard</NavItem>}
+
             {user && <NavItem to="/notifications" icon={Bell}>Notifications</NavItem>}
           </ul>
         </div>
@@ -128,12 +135,23 @@ export default function Navbar() {
                 </div>
               </label>
 
-              <ul tabIndex={0} className="menu dropdown-content mt-3 w-56 rounded-box bg-base-100 p-2 shadow border border-base-200">
+              <ul
+                tabIndex={0}
+                className="menu dropdown-content mt-3 w-56 rounded-box bg-base-100 p-2 shadow border border-base-200"
+              >
+                {/* ✅ Dashboard inside dropdown too */}
+                <li>
+                  <button onClick={() => navigate(dashboardPath)}>
+                    <LayoutDashboard size={16} className="opacity-80" /> Dashboard
+                  </button>
+                </li>
+
                 <li>
                   <button onClick={() => navigate("/profile")}>
                     <User size={16} className="opacity-80" /> Profile
                   </button>
                 </li>
+
                 <li>
                   <button
                     onClick={() => {
