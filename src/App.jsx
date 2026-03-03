@@ -11,6 +11,9 @@ import BuyerDashboard from "./pages/BuyerDashboard";
 import SellerDashboard from "./pages/SellerDashboard";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
+import Checkout from "./pages/Checkout";
+import PaymentResult from "./pages/PaymentResult";
+
 import Footer from "./ui/Footer";
 import { useAuth } from "./state/auth";
 
@@ -77,6 +80,11 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify" element={<Verify />} />
 
+          {/* Payment result (public) */}
+          <Route path="/payment/success" element={<PaymentResult status="success" />} />
+          <Route path="/payment/fail" element={<PaymentResult status="fail" />} />
+          <Route path="/payment/cancel" element={<PaymentResult status="cancel" />} />
+
           {/* Protected */}
           <Route
             path="/buyer"
@@ -91,6 +99,14 @@ export default function App() {
             element={
               <RequireAuth role="SELLER">
                 <SellerDashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/checkout/:id"
+            element={
+              <RequireAuth role="BUYER">
+                <Checkout />
               </RequireAuth>
             }
           />

@@ -1,40 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Card from "../ui/Card";
 import { api } from "../lib/api";
 import { useAuth } from "../state/auth";
-import { Star, Clock, User, ShoppingCart, MessageSquareText } from "lucide-react";
-
-function cleanErrorMessage(err) {
-  let m =
-    err?.message ||
-    err?.data?.detail ||
-    err?.data?.message ||
-    "Failed. Please try again.";
-
-  m = String(m);
-
-  // If backend returns HTML error page (500), keep it readable
-  if (m.includes("<!doctype html") || m.includes("<html")) {
-    return "Server error (500). Backend crashed while creating order. Please try again, or check backend logs.";
-  }
-
-  // Too long message safety
-  if (m.length > 220) m = m.slice(0, 220) + "…";
-  return m;
-}
+import { Star, Clock, User, ShoppingCart, MessageSquareText, ArrowRight } from "lucide-react";
 
 export default function ServiceDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [service, setService] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [reqText, setReqText] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // NOTE: requirements are now collected in Checkout (not here)
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState("info"); // info | success | error
-  const [loading, setLoading] = useState(true);
-  const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -65,67 +47,26 @@ export default function ServiceDetail() {
     return sum / reviews.length;
   }, [reviews]);
 
-  const role = user?.role || user?.profile?.role; // safety: in case role is nested
+  const role = user?.role || user?.profile?.role;
 
-  const placeOrder = async () => {
+  const goCheckout = () => {
     setMsg("");
     setMsgType("info");
 
     if (!user) {
       setMsgType("error");
-      setMsg("Please login first.");
+      setMsg("Please login first to continue to checkout.");
       return;
     }
+
     if (role !== "BUYER") {
       setMsgType("error");
-      setMsg("Login as BUYER to place order.");
+      setMsg("Login as BUYER to continue to checkout.");
       return;
     }
 
-    setPlacing(true);
-
-    const serviceIdNum = Number(id);
-    const note = (reqText || "").trim();
-
-    // ✅ Try common payload shapes (backend mismatch safe)
-    const payloads = [
-      { service: serviceIdNum, buyer_requirements: note },
-      { service_id: serviceIdNum, buyer_requirements: note },
-      { service: serviceIdNum, requirements: note },
-      { service_id: serviceIdNum, requirements: note },
-    ];
-
-    let lastErr = null;
-
-    try {
-      for (const body of payloads) {
-        try {
-          await api("/api/orders/create/", {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
-
-          setMsgType("success");
-          setMsg("✅ Order placed! Check your Buyer Dashboard.");
-          setReqText("");
-          return;
-        } catch (e) {
-          lastErr = e;
-          // keep trying next payload
-        }
-      }
-
-      // all payloads failed
-      throw lastErr || new Error("Order failed");
-    } catch (e) {
-      setMsgType("error");
-      setMsg(
-        cleanErrorMessage(e) ||
-          "Failed. Make sure you are logged in as Buyer and your email is verified."
-      );
-    } finally {
-      setPlacing(false);
-    }
+    // ✅ checkout page will collect: name, phone, address, requirements
+    navigate(`/checkout/${id}`);
   };
 
   if (loading) {
@@ -162,7 +103,9 @@ export default function ServiceDetail() {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/70">
-                <span className="badge badge-outline">{service.category || "General"}</span>
+                <span className="badge badge-outline">
+                  {service.category || "—"}
+                </span>
                 <span className="inline-flex items-center gap-1">
                   <Clock size={14} /> {service.delivery_time_days ?? "—"} days
                 </span>
@@ -190,13 +133,15 @@ export default function ServiceDetail() {
             <div className="sm:text-right">
               <div className="text-xs text-base-content/60">Starting at</div>
               <div className="text-4xl font-extrabold">${service.price}</div>
-              <div className="text-xs text-base-content/60 mt-1">Secure order • Clear status</div>
+              <div className="text-xs text-base-content/60 mt-1">
+                Secure payment • Clear status
+              </div>
             </div>
           </div>
 
           {service.requirements && (
             <div className="mt-5 rounded-2xl bg-base-200 p-5">
-              <div className="text-sm font-semibold">Requirements</div>
+              <div className="text-sm font-semibold">Seller Requirements</div>
               <div className="text-sm text-base-content/80 mt-2 leading-relaxed">
                 {service.requirements}
               </div>
@@ -215,9 +160,11 @@ export default function ServiceDetail() {
                     <span className="text-base-content/60">by</span>{" "}
                     <span className="font-medium">{r.buyer?.username || "Buyer"}</span>
                   </div>
-                  <span className="badge badge-outline">{service.category || "General"}</span>
+                  <span className="badge badge-outline">{service.category || "—"}</span>
                 </div>
-                <div className="text-sm text-base-content/80 mt-2">{r.comment || "—"}</div>
+                <div className="text-sm text-base-content/80 mt-2">
+                  {r.comment || "—"}
+                </div>
               </div>
             ))}
 
@@ -230,45 +177,33 @@ export default function ServiceDetail() {
 
       {/* RIGHT */}
       <div className="lg:col-span-1">
-        <Card title="Place order" actions={<ShoppingCart size={18} className="opacity-70" />}>
+        <Card title="Buy service" actions={<ShoppingCart size={18} className="opacity-70" />}>
           {role === "BUYER" ? (
             <>
               <div className="text-sm text-base-content/70">
-                Add a short note for the seller (requirements, references, etc.)
+                Continue to checkout to provide <b>name, phone, address</b> and pay via <b>SSLCOMMERZ</b>.
               </div>
 
-              <label className="form-control mt-3">
-                <div className="label">
-                  <span className="label-text flex items-center gap-2">
-                    <MessageSquareText size={16} /> Your note
-                  </span>
-                </div>
-                <textarea
-                  value={reqText}
-                  onChange={(e) => setReqText(e.target.value)}
-                  placeholder="Tell the seller what you need..."
-                  className="textarea textarea-bordered min-h-[140px]"
-                />
-              </label>
+              <div className="mt-4 rounded-2xl bg-base-200 p-4">
+                <div className="text-sm font-semibold">What happens next?</div>
+                <ul className="text-sm text-base-content/70 mt-2 space-y-1 list-disc list-inside">
+                  <li>You’ll enter delivery details and requirements</li>
+                  <li>You’ll be redirected to SSLCOMMERZ to pay</li>
+                  <li>After success, order will appear in Buyer Dashboard</li>
+                </ul>
+              </div>
 
-              <button onClick={placeOrder} disabled={placing} className="btn btn-primary w-full mt-4">
-                {placing ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm" />
-                    Placing...
-                  </>
-                ) : (
-                  "Place Order"
-                )}
+              <button onClick={goCheckout} className="btn btn-primary w-full mt-4">
+                Continue to Checkout <ArrowRight size={16} />
               </button>
 
               <div className="mt-3 text-xs text-base-content/60">
-                Tip: Check Buyer Dashboard after placing order.
+                Tip: Payment status will be shown after checkout.
               </div>
             </>
           ) : (
             <div className="text-sm text-base-content/70">
-              Login as <b>Buyer</b> to place order.
+              Login as <b>Buyer</b> to purchase this service.
               <div className="mt-3 flex gap-2">
                 <Link to="/login" className="btn btn-outline btn-sm">
                   Login
@@ -281,10 +216,20 @@ export default function ServiceDetail() {
           )}
 
           {msg && (
-            <div className={`mt-4 alert ${msgType === "success" ? "alert-success" : msgType === "error" ? "alert-error" : ""}`}>
+            <div
+              className={`mt-4 alert ${
+                msgType === "success" ? "alert-success" : msgType === "error" ? "alert-error" : ""
+              }`}
+            >
               <span>{msg}</span>
             </div>
           )}
+
+          {/* Optional: show note moved to checkout */}
+          <div className="mt-4 text-xs text-base-content/60 flex items-center gap-2">
+            <MessageSquareText size={14} className="opacity-70" />
+            Requirements/note will be collected in Checkout page.
+          </div>
         </Card>
       </div>
     </div>
