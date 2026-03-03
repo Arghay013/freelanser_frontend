@@ -21,6 +21,8 @@ function cleanErrorMessage(err) {
   return m;
 }
 
+const FALLBACK_IMG = "https://placehold.co/600x400?text=Service";
+
 export default function Services() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -35,26 +37,35 @@ export default function Services() {
   const role = user?.role || user?.profile?.role;
 
   useEffect(() => {
+    let alive = true;
+
     (async () => {
       setLoading(true);
       setMsg("");
       try {
         const res = await api("/api/services/", { method: "GET" });
         const list = Array.isArray(res) ? res : res?.results || [];
-        setServices(list);
+        if (alive) setServices(list);
       } catch (e) {
-        setServices([]);
-        setMsgType("error");
-        setMsg(cleanErrorMessage(e));
+        if (alive) {
+          setServices([]);
+          setMsgType("error");
+          setMsg(cleanErrorMessage(e));
+        }
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     })();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const filtered = useMemo(() => {
     const s = (q || "").trim().toLowerCase();
     if (!s) return services;
+
     return services.filter((x) => {
       const t = `${x?.title || ""} ${x?.description || ""} ${x?.category || ""}`.toLowerCase();
       return t.includes(s);
@@ -101,7 +112,11 @@ export default function Services() {
       </div>
 
       {msg ? (
-        <div className={`mt-5 alert ${msgType === "error" ? "alert-error" : msgType === "success" ? "alert-success" : ""}`}>
+        <div
+          className={`mt-5 alert ${
+            msgType === "error" ? "alert-error" : msgType === "success" ? "alert-success" : ""
+          }`}
+        >
           <span>{msg}</span>
         </div>
       ) : null}
@@ -117,55 +132,78 @@ export default function Services() {
         </div>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => (
-            <div key={s.id} className="card bg-base-100 shadow border border-base-200">
-              <div className="card-body">
-                <div className="flex items-center justify-between">
-                  <span className="badge badge-outline">{s.category || "—"}</span>
-                  <span className="badge badge-primary badge-outline">
-                    <Star size={14} className="mr-1" />
-                    {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "New"}
-                  </span>
-                </div>
+          {filtered.map((s) => {
+            const imgSrc = s.image || s.thumbnail || s.image_url || FALLBACK_IMG;
 
-                <h2 className="card-title mt-2">{s.title}</h2>
-                <p className="text-sm text-base-content/70 line-clamp-3">
-                  {s.description || "—"}
-                </p>
-
-                <div className="mt-3 flex flex-wrap gap-3 text-xs text-base-content/60">
-                  <span className="inline-flex items-center gap-1">
-                    <Clock size={14} /> {s.delivery_time_days ?? "—"} days
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <User size={14} /> {s.seller?.username || "Seller"}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-base-content/60">Starting at</div>
-                    <div className="text-2xl font-extrabold">${s.price}</div>
+            return (
+              <div
+                key={s.id}
+                className="card bg-base-100 shadow border border-base-200"
+              >
+                <div className="card-body">
+                  <div className="flex items-center justify-between">
+                    <span className="badge badge-outline">{s.category || "—"}</span>
+                    <span className="badge badge-primary badge-outline">
+                      <Star size={14} className="mr-1" />
+                      {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "New"}
+                    </span>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Link to={`/services/${s.id}`} className="btn btn-ghost btn-sm">
-                      Details
-                    </Link>
+                  {/* Thumbnail */}
+                  <div className="rounded-2xl overflow-hidden border border-base-200 mt-3">
+                    <img
+                      src={imgSrc}
+                      alt={s.title || "Service"}
+                      className="w-full h-40 object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        // prevent infinite loop
+                        if (e.currentTarget.src !== FALLBACK_IMG) {
+                          e.currentTarget.src = FALLBACK_IMG;
+                        }
+                      }}
+                    />
+                  </div>
 
-                    {/* ✅ UPDATED BUY: goes to checkout */}
-                    <button
-                      onClick={() => goCheckout(s.id)}
-                      className="btn btn-primary btn-sm"
-                    >
-                      <ShoppingCart size={16} />
-                      Buy
-                    </button>
+                  <h2 className="card-title mt-3">{s.title}</h2>
+                  <p className="text-sm text-base-content/70 line-clamp-3">
+                    {s.description || "—"}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs text-base-content/60">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={14} /> {s.delivery_time_days ?? "—"} days
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <User size={14} /> {s.seller?.username || "Seller"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-base-content/60">Starting at</div>
+                      <div className="text-2xl font-extrabold">${s.price}</div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Link to={`/services/${s.id}`} className="btn btn-ghost btn-sm">
+                        Details
+                      </Link>
+
+                      <button
+                        onClick={() => goCheckout(s.id)}
+                        className="btn btn-primary btn-sm"
+                        title="Buy (Checkout)"
+                      >
+                        <ShoppingCart size={16} />
+                        Buy
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filtered.length === 0 && (
             <div className="col-span-full">
