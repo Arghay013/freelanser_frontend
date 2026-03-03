@@ -10,7 +10,7 @@ export default function SellerDashboard() {
 
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("web"); // ✅ default
+  const [category, setCategory] = useState("programming"); // ✅ default
   const [error, setError] = useState("");
 
   const loadMyServices = async () => {
@@ -38,7 +38,8 @@ export default function SellerDashboard() {
       setError("");
 
       if (!title.trim()) return setError("Title is required");
-      if (!price || isNaN(Number(price))) return setError("Valid price required");
+      if (!price || isNaN(Number(price)))
+        return setError("Valid price required");
 
       await api("/api/services/", {
         method: "POST",
@@ -75,10 +76,11 @@ export default function SellerDashboard() {
       <h1 className="text-3xl font-bold mb-6">Seller Dashboard</h1>
 
       <div className="flex gap-4 items-end mb-6 flex-wrap">
-        
         {/* TITLE */}
         <div className="flex-1 min-w-[200px]">
-          <label className="label"><span className="label-text">Title</span></label>
+          <label className="label">
+            <span className="label-text">Title</span>
+          </label>
           <input
             className="input input-bordered w-full"
             value={title}
@@ -89,7 +91,9 @@ export default function SellerDashboard() {
 
         {/* PRICE */}
         <div className="w-40">
-          <label className="label"><span className="label-text">Price</span></label>
+          <label className="label">
+            <span className="label-text">Price</span>
+          </label>
           <input
             className="input input-bordered w-full"
             value={price}
@@ -100,14 +104,16 @@ export default function SellerDashboard() {
 
         {/* CATEGORY DROPDOWN */}
         <div className="w-52">
-          <label className="label"><span className="label-text">Category</span></label>
+          <label className="label">
+            <span className="label-text">Category</span>
+          </label>
           <select
             className="select select-bordered w-full"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="web">Web Development</option>
-            <option value="design">Design</option>
+            <option value="programming">Programming</option>
+            <option value="marketing">Marketing</option>
             <option value="video">Video Editing</option>
           </select>
         </div>
