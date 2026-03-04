@@ -2,43 +2,73 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../state/auth";
 import { api } from "../lib/api";
 import Card from "../ui/Card";
-import { BellRing, Search } from "lucide-react";
+import { BellRing, Search, CheckCircle2 } from "lucide-react";
+
+function cleanErrorMessage(err) {
+  let m = err?.message || err?.data?.detail || "Failed to load notifications.";
+  m = String(m);
+  if (m.includes("<!doctype html") || m.includes("<html")) return "Server error (500).";
+  if (m.length > 220) m = m.slice(0, 220) + "…";
+  return m;
+}
 
 export default function Notifications() {
   const { user } = useAuth();
+
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState("");
+
+  const load = async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setMsg("");
+      const data = await api("/api/notifications/", { method: "GET" });
+      const list = Array.isArray(data) ? data : data?.results || [];
+      setItems(list);
+    } catch (e) {
+      setItems([]);
+      setMsg(cleanErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!user) return;
-
-    (async () => {
-      try {
-        setLoading(true);
-        const data = await api("/api/notifications/", { method: "GET" });
-        const list = Array.isArray(data) ? data : (data?.results || []);
-        setItems(list);
-      } catch {
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return items;
+
     return items.filter((n) => {
-      const t = String(n.title || "").toLowerCase();
-      const m = String(n.message || n.text || "").toLowerCase();
+      const t = String(n.ntype || "").toLowerCase();     // ✅ backend field
+      const m = String(n.message || "").toLowerCase();   // ✅ backend field
       return t.includes(s) || m.includes(s);
     });
   }, [items, q]);
 
+  const unreadCount = useMemo(() => items.filter((x) => !x.is_read).length, [items]);
+
+  const markRead = async (id) => {
+    try {
+      await api(`/api/notifications/${id}/read/`, { method: "POST" });
+      setItems((prev) => prev.map((x) => (x.id === id ? { ...x, is_read: true } : x)));
+    } catch (e) {
+      setMsg(cleanErrorMessage(e));
+    }
+  };
+
   if (!user) {
-    return <div className="mx-auto max-w-6xl px-4 py-12 text-base-content/70">Please login.</div>;
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-12 text-base-content/70">
+        Please login.
+      </div>
+    );
   }
 
   return (
@@ -50,7 +80,7 @@ export default function Notifications() {
         </div>
         <div className="badge badge-outline">
           <BellRing size={14} className="mr-1" />
-          {items.length} total
+          {unreadCount} unread / {items.length} total
         </div>
       </div>
 
@@ -66,6 +96,12 @@ export default function Notifications() {
         />
       </div>
 
+      {msg ? (
+        <div className="alert alert-error">
+          <span>{msg}</span>
+        </div>
+      ) : null}
+
       <div className="grid gap-3">
         {loading ? (
           <Card>
@@ -77,11 +113,40 @@ export default function Notifications() {
         ) : (
           <>
             {filtered.map((n) => (
-              <Card key={n.id} className="hover:shadow-md transition">
-                <div className="font-semibold">{n.title || "Notification"}</div>
-                <div className="text-sm text-base-content/70 mt-1">{n.message || n.text || "—"}</div>
-                <div className="text-xs text-base-content/60 mt-3">
-                  {n.created_at ? new Date(n.created_at).toLocaleString() : ""}
+              <Card
+                key={n.id}
+                className={`hover:shadow-md transition ${
+                  n.is_read ? "" : "border border-primary/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    {/* ✅ ntype দেখাও */}
+                    <div className="font-semibold">
+                      {n.ntype || "NOTIFICATION"}
+                      {!n.is_read && <span className="badge badge-primary badge-sm ml-2">NEW</span>}
+                    </div>
+
+                    {/* ✅ message দেখাও */}
+                    <div className="text-sm text-base-content/70 mt-1">
+                      {n.message || "—"}
+                    </div>
+
+                    <div className="text-xs text-base-content/60 mt-3">
+                      {n.created_at ? new Date(n.created_at).toLocaleString() : ""}
+                    </div>
+                  </div>
+
+                  {/* ✅ mark read button */}
+                  {!n.is_read ? (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => markRead(n.id)}
+                      title="Mark as read"
+                    >
+                      <CheckCircle2 size={16} />
+                    </button>
+                  ) : null}
                 </div>
               </Card>
             ))}
