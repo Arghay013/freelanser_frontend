@@ -13,10 +13,8 @@ export default function ServiceDetail() {
   const [service, setService] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // NOTE: requirements are now collected in Checkout (not here)
   const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState("info"); // info | success | error
+  const [msgType, setMsgType] = useState("info");
 
   useEffect(() => {
     (async () => {
@@ -49,23 +47,22 @@ export default function ServiceDetail() {
 
   const role = user?.role || user?.profile?.role;
 
-  const goCheckout = () => {
+  const goRequest = () => {
     setMsg("");
     setMsgType("info");
 
     if (!user) {
       setMsgType("error");
-      setMsg("Please login first to continue to checkout.");
+      setMsg("Please login first to request this service.");
       return;
     }
 
     if (role !== "BUYER") {
       setMsgType("error");
-      setMsg("Login as BUYER to continue to checkout.");
+      setMsg("Login as BUYER to request this service.");
       return;
     }
 
-    // ✅ checkout page will collect: name, phone, address, requirements
     navigate(`/checkout/${id}`);
   };
 
@@ -97,15 +94,12 @@ export default function ServiceDetail() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 grid gap-5 lg:grid-cols-3">
-      {/* LEFT */}
       <div className="lg:col-span-2 space-y-5">
         <Card className="overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2 text-sm text-base-content/70">
-                <span className="badge badge-outline">
-                  {service.category || "—"}
-                </span>
+                <span className="badge badge-outline">{service.category || "—"}</span>
                 <span className="inline-flex items-center gap-1">
                   <Clock size={14} /> {service.delivery_time_days ?? "—"} days
                 </span>
@@ -115,9 +109,7 @@ export default function ServiceDetail() {
               </div>
 
               <h1 className="text-3xl font-extrabold mt-3">{service.title}</h1>
-              <p className="text-base-content/70 mt-2 leading-relaxed">
-                {service.description}
-              </p>
+              <p className="text-base-content/70 mt-2 leading-relaxed">{service.description}</p>
 
               <div className="mt-4 flex items-center gap-2">
                 <div className="badge badge-primary badge-outline">
@@ -133,23 +125,18 @@ export default function ServiceDetail() {
             <div className="sm:text-right">
               <div className="text-xs text-base-content/60">Starting at</div>
               <div className="text-4xl font-extrabold">${service.price}</div>
-              <div className="text-xs text-base-content/60 mt-1">
-                Secure payment • Clear status
-              </div>
+              <div className="text-xs text-base-content/60 mt-1">Request first • Review update • Pay after accept</div>
             </div>
           </div>
 
           {service.requirements && (
             <div className="mt-5 rounded-2xl bg-base-200 p-5">
               <div className="text-sm font-semibold">Seller Requirements</div>
-              <div className="text-sm text-base-content/80 mt-2 leading-relaxed">
-                {service.requirements}
-              </div>
+              <div className="text-sm text-base-content/80 mt-2 leading-relaxed">{service.requirements}</div>
             </div>
           )}
         </Card>
 
-        {/* REVIEWS */}
         <Card title="Reviews">
           <div className="grid gap-3">
             {reviews.map((r) => (
@@ -162,48 +149,41 @@ export default function ServiceDetail() {
                   </div>
                   <span className="badge badge-outline">{service.category || "—"}</span>
                 </div>
-                <div className="text-sm text-base-content/80 mt-2">
-                  {r.comment || "—"}
-                </div>
+                <div className="text-sm text-base-content/80 mt-2">{r.comment || "—"}</div>
               </div>
             ))}
 
-            {reviews.length === 0 && (
-              <div className="text-sm text-base-content/70">No reviews yet.</div>
-            )}
+            {reviews.length === 0 && <div className="text-sm text-base-content/70">No reviews yet.</div>}
           </div>
         </Card>
       </div>
 
-      {/* RIGHT */}
       <div className="lg:col-span-1">
-        <Card title="Buy service" actions={<ShoppingCart size={18} className="opacity-70" />}>
+        <Card title="Request service" actions={<ShoppingCart size={18} className="opacity-70" />}>
           {role === "BUYER" ? (
             <>
               <div className="text-sm text-base-content/70">
-                Continue to checkout to provide <b>name, phone, address</b> and pay via <b>SSLCOMMERZ</b>.
+                এখানে buyer আগে request করবে। seller update দিবে। তারপর buyer accept or reject করবে।
+                accept করার পরেই payment unlock হবে.
               </div>
 
               <div className="mt-4 rounded-2xl bg-base-200 p-4">
                 <div className="text-sm font-semibold">What happens next?</div>
                 <ul className="text-sm text-base-content/70 mt-2 space-y-1 list-disc list-inside">
-                  <li>You’ll enter delivery details and requirements</li>
-                  <li>You’ll be redirected to SSLCOMMERZ to pay</li>
-                  <li>After success, order will appear in Buyer Dashboard</li>
+                  <li>You send your request and requirements</li>
+                  <li>Seller sends an update for your review</li>
+                  <li>You accept or reject the update</li>
+                  <li>After accept, you pay via SSLCOMMERZ</li>
                 </ul>
               </div>
 
-              <button onClick={goCheckout} className="btn btn-primary w-full mt-4">
-                Continue to Checkout <ArrowRight size={16} />
+              <button onClick={goRequest} className="btn btn-primary w-full mt-4">
+                Send Request <ArrowRight size={16} />
               </button>
-
-              <div className="mt-3 text-xs text-base-content/60">
-                Tip: Payment status will be shown after checkout.
-              </div>
             </>
           ) : (
             <div className="text-sm text-base-content/70">
-              Login as <b>Buyer</b> to purchase this service.
+              Login as <b>Buyer</b> to request this service.
               <div className="mt-3 flex gap-2">
                 <Link to="/login" className="btn btn-outline btn-sm">
                   Login
@@ -216,19 +196,14 @@ export default function ServiceDetail() {
           )}
 
           {msg && (
-            <div
-              className={`mt-4 alert ${
-                msgType === "success" ? "alert-success" : msgType === "error" ? "alert-error" : ""
-              }`}
-            >
+            <div className={`mt-4 alert ${msgType === "success" ? "alert-success" : msgType === "error" ? "alert-error" : ""}`}>
               <span>{msg}</span>
             </div>
           )}
 
-          {/* Optional: show note moved to checkout */}
           <div className="mt-4 text-xs text-base-content/60 flex items-center gap-2">
             <MessageSquareText size={14} className="opacity-70" />
-            Requirements/note will be collected in Checkout page.
+            Request note will be collected on the next page.
           </div>
         </Card>
       </div>

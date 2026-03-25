@@ -5,20 +5,15 @@ import { api } from "../lib/api";
 import { useAuth } from "../state/auth";
 
 export default function Checkout() {
-  const { id } = useParams(); // serviceId
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [buyerRequirements, setBuyerRequirements] = useState("");
-
   const [error, setError] = useState("");
-  const [paying, setPaying] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -27,7 +22,7 @@ export default function Checkout() {
       try {
         const s = await api(`/api/services/${id}/`, { method: "GET" });
         setService(s);
-      } catch (e) {
+      } catch {
         setService(null);
         setError("Service not found");
       } finally {
@@ -36,36 +31,31 @@ export default function Checkout() {
     })();
   }, [id]);
 
-  const startPayment = async () => {
+  const submitRequest = async () => {
     setError("");
 
     if (!user) return navigate("/login");
-    if (user.role !== "BUYER") return setError("Please login as BUYER to checkout.");
+    if (user.role !== "BUYER") return setError("Please login as BUYER to request this service.");
 
-    if (!name.trim()) return setError("Name is required");
-    if (!phone.trim()) return setError("Phone is required");
-    if (!address.trim()) return setError("Address is required");
-
-    setPaying(true);
+    setSubmitting(true);
     try {
-      const res = await api("/api/payments/sslcommerz/init/", {
+      await api("/api/orders/create/", {
         method: "POST",
         body: JSON.stringify({
           service_id: Number(id),
-          name: name.trim(),
-          phone: phone.trim(),
-          address: address.trim(),
           buyer_requirements: buyerRequirements.trim(),
         }),
       });
 
-      const url = res?.gateway_url;
-      if (!url) throw new Error("Payment gateway URL not found");
-      window.location.href = url; // ✅ redirect to SSLCOMMERZ
+      navigate("/buyer", {
+        state: {
+          success: "Request sent successfully. Seller will review and send an update.",
+        },
+      });
     } catch (e) {
-      setError(e?.message || "Payment init failed");
+      setError(e?.message || "Failed to send request");
     } finally {
-      setPaying(false);
+      setSubmitting(false);
     }
   };
 
@@ -75,7 +65,7 @@ export default function Checkout() {
         <Card>
           <div className="flex items-center gap-2 text-base-content/70">
             <span className="loading loading-spinner loading-sm" />
-            Loading checkout...
+            Loading request form...
           </div>
         </Card>
       </div>
@@ -95,7 +85,7 @@ export default function Checkout() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <Card title="Checkout">
+        <Card title="Send Service Request">
           {error ? (
             <div className="alert alert-error mb-4">
               <span>{error}</span>
@@ -103,83 +93,44 @@ export default function Checkout() {
           ) : null}
 
           <div className="grid gap-4">
-            <div>
-              <label className="label">
-                <span className="label-text">Full name</span>
-              </label>
-              <input
-                className="input input-bordered w-full"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-              />
+            <div className="rounded-2xl bg-base-200 p-4 text-sm text-base-content/80">
+              আগে request যাবে। তারপর seller update দিবে। এরপর buyer accept বা reject করবে।
+              buyer accept করার পরে payment option unlock হবে।
             </div>
 
             <div>
               <label className="label">
-                <span className="label-text">Phone</span>
-              </label>
-              <input
-                className="input input-bordered w-full"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="01XXXXXXXXX"
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Address</span>
+                <span className="label-text">Project requirements / instructions</span>
               </label>
               <textarea
                 className="textarea textarea-bordered w-full"
-                rows={3}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Full address"
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                <span className="label-text">Order requirements (optional)</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered w-full"
-                rows={3}
+                rows={6}
                 value={buyerRequirements}
                 onChange={(e) => setBuyerRequirements(e.target.value)}
-                placeholder="Any additional info for the seller..."
+                placeholder="Write what you want from the seller..."
               />
             </div>
 
-            <button
-              className="btn btn-primary w-full"
-              onClick={startPayment}
-              disabled={paying}
-            >
-              {paying ? "Redirecting..." : "Pay Now (SSLCOMMERZ)"}
+            <button className="btn btn-primary w-full" onClick={submitRequest} disabled={submitting}>
+              {submitting ? "Sending request..." : "Send Request"}
             </button>
           </div>
         </Card>
       </div>
 
       <div>
-        <Card title="Order Summary">
+        <Card title="Request Summary">
           <div className="space-y-2">
             <div className="font-bold text-lg">{service.title}</div>
             <div className="text-base-content/70">Category: {service.category}</div>
             <div className="text-base-content/70">Delivery: {service.delivery_time_days} days</div>
-
             <div className="divider my-3" />
-
             <div className="flex items-center justify-between">
-              <span className="font-semibold">Total</span>
+              <span className="font-semibold">Price</span>
               <span className="text-xl font-extrabold">${service.price}</span>
             </div>
-
             <div className="text-xs text-base-content/60 mt-2">
-              After payment success, your order will appear in Buyer Dashboard.
+              Note: payment এখনই হবে না। seller update submit করার পরে buyer accept করলে payment করা যাবে।
             </div>
           </div>
         </Card>

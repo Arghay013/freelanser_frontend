@@ -13,17 +13,17 @@ export default function PaymentResult({ status }) {
   const map = {
     success: {
       title: "✅ Payment Successful",
-      desc: "Your payment was successful. Your order is now in progress.",
+      desc: "Your payment was successful. The order is now in progress.",
       badge: "badge-success",
     },
     fail: {
       title: "❌ Payment Failed",
-      desc: "Your payment failed. Please try again.",
+      desc: "Your payment failed. You can try again from Buyer Dashboard.",
       badge: "badge-error",
     },
     cancel: {
       title: "⚠️ Payment Cancelled",
-      desc: "You cancelled the payment.",
+      desc: "You cancelled the payment. You can pay later from Buyer Dashboard.",
       badge: "badge-warning",
     },
   };
@@ -45,12 +45,8 @@ export default function PaymentResult({ status }) {
         )}
 
         <div className="mt-6 flex gap-2 flex-wrap">
-          <Link to="/buyer" className="btn btn-primary">
-            Go to Buyer Dashboard
-          </Link>
-          <Link to="/services" className="btn btn-ghost">
-            Back to Services
-          </Link>
+          <Link to="/buyer" className="btn btn-primary">Go to Buyer Dashboard</Link>
+          <Link to="/services" className="btn btn-ghost">Back to Services</Link>
         </div>
       </Card>
     </div>
