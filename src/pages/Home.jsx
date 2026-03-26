@@ -226,7 +226,7 @@ export default function Home() {
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Link to="/register" className="btn btn-primary">
-                  Create account
+                  Create Account
                 </Link>
                 <Link to="/services" className="btn btn-outline btn-ghost text-white border-white/40">
                   See services
