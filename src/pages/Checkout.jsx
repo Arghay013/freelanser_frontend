@@ -49,7 +49,7 @@ export default function Checkout() {
 
       navigate("/buyer", {
         state: {
-          success: "Request sent successfully. Seller will review and send an update.",
+          success: "Request sent successfully. Seller will first accept or reject your request.",
         },
       });
     } catch (e) {
@@ -85,7 +85,9 @@ export default function Checkout() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <Card title="Send Service Request">
+        <Card>
+          <div className="text-xl font-bold mb-4">Send Service Request</div>
+
           {error ? (
             <div className="alert alert-error mb-4">
               <span>{error}</span>
@@ -94,8 +96,8 @@ export default function Checkout() {
 
           <div className="grid gap-4">
             <div className="rounded-2xl bg-base-200 p-4 text-sm text-base-content/80">
-              আগে request যাবে। তারপর seller update দিবে। এরপর buyer accept বা reject করবে।
-              buyer accept করার পরে payment option unlock হবে।
+              আগে request যাবে। তারপর seller accept বা reject করবে। seller accept করলে seller update দিবে।
+              এরপর buyer accept বা reject করবে। buyer accept করার পরে payment option unlock হবে।
             </div>
 
             <div>
@@ -119,7 +121,9 @@ export default function Checkout() {
       </div>
 
       <div>
-        <Card title="Request Summary">
+        <Card>
+          <div className="text-xl font-bold mb-4">Request Summary</div>
+
           <div className="space-y-2">
             <div className="font-bold text-lg">{service.title}</div>
             <div className="text-base-content/70">Category: {service.category}</div>
@@ -130,7 +134,8 @@ export default function Checkout() {
               <span className="text-xl font-extrabold">${service.price}</span>
             </div>
             <div className="text-xs text-base-content/60 mt-2">
-              Note: payment এখনই হবে না। seller update submit করার পরে buyer accept করলে payment করা যাবে।
+              Note: payment এখনই হবে না। seller accept করার পর seller update submit করবে।
+              buyer accept করলে তারপর payment করা যাবে।
             </div>
           </div>
         </Card>

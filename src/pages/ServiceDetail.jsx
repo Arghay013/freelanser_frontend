@@ -125,7 +125,7 @@ export default function ServiceDetail() {
             <div className="sm:text-right">
               <div className="text-xs text-base-content/60">Starting at</div>
               <div className="text-4xl font-extrabold">${service.price}</div>
-              <div className="text-xs text-base-content/60 mt-1">Request first • Review update • Pay after accept</div>
+              <div className="text-xs text-base-content/60 mt-1">Request first • Seller accept/reject • Review update • Pay later</div>
             </div>
           </div>
 
@@ -137,7 +137,9 @@ export default function ServiceDetail() {
           )}
         </Card>
 
-        <Card title="Reviews">
+        <Card>
+          <div className="text-xl font-bold mb-4">Reviews</div>
+
           <div className="grid gap-3">
             {reviews.map((r) => (
               <div key={r.id} className="rounded-2xl border border-base-200 p-4">
@@ -159,19 +161,26 @@ export default function ServiceDetail() {
       </div>
 
       <div className="lg:col-span-1">
-        <Card title="Request service" actions={<ShoppingCart size={18} className="opacity-70" />}>
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-bold">Request service</div>
+            <ShoppingCart size={18} className="opacity-70" />
+          </div>
+
           {role === "BUYER" ? (
             <>
-              <div className="text-sm text-base-content/70">
-                এখানে buyer আগে request করবে। seller update দিবে। তারপর buyer accept or reject করবে।
-                accept করার পরেই payment unlock হবে.
+              <div className="mt-4 text-sm text-base-content/70">
+                এখানে buyer আগে request করবে। তারপর seller আগে accept/reject করবে।
+                seller accept করলে update দিবে। তারপর buyer accept বা reject করবে।
+                buyer accept করার পরেই payment unlock হবে।
               </div>
 
               <div className="mt-4 rounded-2xl bg-base-200 p-4">
                 <div className="text-sm font-semibold">What happens next?</div>
                 <ul className="text-sm text-base-content/70 mt-2 space-y-1 list-disc list-inside">
                   <li>You send your request and requirements</li>
-                  <li>Seller sends an update for your review</li>
+                  <li>Seller accepts or rejects your request</li>
+                  <li>If accepted, seller sends an update/work</li>
                   <li>You accept or reject the update</li>
                   <li>After accept, you pay via SSLCOMMERZ</li>
                 </ul>
@@ -182,7 +191,7 @@ export default function ServiceDetail() {
               </button>
             </>
           ) : (
-            <div className="text-sm text-base-content/70">
+            <div className="mt-4 text-sm text-base-content/70">
               Login as <b>Buyer</b> to request this service.
               <div className="mt-3 flex gap-2">
                 <Link to="/login" className="btn btn-outline btn-sm">

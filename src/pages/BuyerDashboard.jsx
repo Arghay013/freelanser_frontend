@@ -3,7 +3,14 @@ import { useLocation, Link } from "react-router-dom";
 import Card from "../ui/Card";
 import { useAuth } from "../state/auth";
 import { api } from "../lib/api";
-import { Package, Search, ArrowUpRight } from "lucide-react";
+import {
+  Package,
+  Search,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  XCircle,
+} from "lucide-react";
 
 const statusBadge = (status) => {
   const s = String(status || "").toUpperCase();
@@ -13,7 +20,39 @@ const statusBadge = (status) => {
   if (s === "SELLER_UPDATED") return "badge-primary";
   if (s === "CHANGES_REQUESTED") return "badge-error";
   if (s === "REQUESTED") return "badge-info";
+  if (s === "REQUEST_ACCEPTED") return "badge-accent";
+  if (s === "REQUEST_REJECTED") return "badge-error";
   return "badge-ghost";
+};
+
+const statusMessage = (status) => {
+  const s = String(status || "").toUpperCase();
+
+  if (s === "REQUESTED") {
+    return {
+      icon: <Clock3 size={16} />,
+      text: "Your request has been sent. Seller will now accept or reject it first.",
+      box: "bg-info/10 text-info-content border border-info/20",
+    };
+  }
+
+  if (s === "REQUEST_ACCEPTED") {
+    return {
+      icon: <CheckCircle2 size={16} />,
+      text: "Seller accepted your request. Now the seller can send you the work/update.",
+      box: "bg-primary/10 text-primary-content border border-primary/20",
+    };
+  }
+
+  if (s === "REQUEST_REJECTED") {
+    return {
+      icon: <XCircle size={16} />,
+      text: "Seller rejected your request. This order will not continue.",
+      box: "bg-error/10 text-error-content border border-error/20",
+    };
+  }
+
+  return null;
 };
 
 export default function BuyerDashboard() {
@@ -131,7 +170,9 @@ export default function BuyerDashboard() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold">Buyer Dashboard</h1>
-          <p className="text-base-content/70">Request service, review seller updates, then pay after accept.</p>
+          <p className="text-base-content/70">
+            Request service, wait for seller accept/reject, then review update and pay after acceptance.
+          </p>
         </div>
 
         <Link to="/services" className="btn btn-primary">
@@ -181,89 +222,102 @@ export default function BuyerDashboard() {
           {filtered.map((o) => {
             const form = paymentForm[o.id] || { name: user?.username || "", phone: "", address: "" };
             const isBusy = busyId === o.id;
+            const flowMsg = statusMessage(o.status);
 
             return (
-              <Card
-                key={o.id}
-                className="hover:shadow-md transition"
-                title={
-                  <div className="flex items-center gap-2">
-                    <Package size={18} className="opacity-80" />
-                    <Link className="hover:underline" to={`/services/${o.service?.id || ""}`}>
-                      {o.service?.title || "Service"}
-                    </Link>
+              <Card key={o.id} className="hover:shadow-md transition">
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package size={18} className="opacity-80" />
+                      <Link className="hover:underline font-semibold" to={`/services/${o.service?.id || ""}`}>
+                        {o.service?.title || "Service"}
+                      </Link>
+                    </div>
+
+                    <div className={`badge ${statusBadge(o.status)} badge-outline font-semibold`}>
+                      {o.status || "—"}
+                    </div>
                   </div>
-                }
-                actions={<div className={`badge ${statusBadge(o.status)} badge-outline font-semibold`}>{o.status || "—"}</div>}
-              >
-                <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                  <div className="text-base-content/70">
-                    Seller: <span className="font-medium text-base-content">{o.seller?.username || "—"}</span>
+
+                  <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div className="text-base-content/70">
+                      Seller: <span className="font-medium text-base-content">{o.seller?.username || "—"}</span>
+                    </div>
+                    <div className="text-base-content/70 sm:text-right">
+                      Created: <span className="font-medium text-base-content">{o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</span>
+                    </div>
                   </div>
-                  <div className="text-base-content/70 sm:text-right">
-                    Created: <span className="font-medium text-base-content">{o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</span>
-                  </div>
+
+                  {flowMsg ? (
+                    <div className={`rounded-2xl p-4 text-sm flex items-start gap-2 ${flowMsg.box}`}>
+                      <span className="mt-0.5">{flowMsg.icon}</span>
+                      <span>{flowMsg.text}</span>
+                    </div>
+                  ) : null}
+
+                  {o.buyer_requirements ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="text-xs text-base-content/60 mb-1">Your requirements</div>
+                      <div className="text-base-content/80">{o.buyer_requirements}</div>
+                    </div>
+                  ) : null}
+
+                  {o.seller_update_message ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="text-xs text-base-content/60 mb-1">
+                        {String(o.status).toUpperCase() === "REQUEST_REJECTED" ? "Seller note" : "Seller update"}
+                      </div>
+                      <div className="text-base-content/80">{o.seller_update_message}</div>
+                    </div>
+                  ) : null}
+
+                  {o.buyer_response_note ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="text-xs text-base-content/60 mb-1">Your last response</div>
+                      <div className="text-base-content/80">{o.buyer_response_note}</div>
+                    </div>
+                  ) : null}
+
+                  {o.status === "SELLER_UPDATED" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button className="btn btn-success btn-sm" disabled={isBusy} onClick={() => reviewOrder(o.id, "accept")}>
+                        Accept
+                      </button>
+                      <button className="btn btn-error btn-sm" disabled={isBusy} onClick={() => reviewOrder(o.id, "reject")}>
+                        Reject
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {o.status === "AWAITING_PAYMENT" ? (
+                    <div className="space-y-3 rounded-2xl border border-base-200 p-4">
+                      <div className="font-semibold">Payment info</div>
+                      <input
+                        className="input input-bordered w-full"
+                        placeholder="Full name"
+                        value={form.name}
+                        onChange={(e) => updatePaymentField(o.id, "name", e.target.value)}
+                      />
+                      <input
+                        className="input input-bordered w-full"
+                        placeholder="Phone"
+                        value={form.phone}
+                        onChange={(e) => updatePaymentField(o.id, "phone", e.target.value)}
+                      />
+                      <textarea
+                        className="textarea textarea-bordered w-full"
+                        rows={3}
+                        placeholder="Address"
+                        value={form.address}
+                        onChange={(e) => updatePaymentField(o.id, "address", e.target.value)}
+                      />
+                      <button className="btn btn-primary btn-sm" disabled={isBusy} onClick={() => payNow(o)}>
+                        {isBusy ? "Redirecting..." : "Pay Now"}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-
-                {o.buyer_requirements ? (
-                  <div className="rounded-2xl bg-base-200 p-4 text-sm">
-                    <div className="text-xs text-base-content/60 mb-1">Your requirements</div>
-                    <div className="text-base-content/80">{o.buyer_requirements}</div>
-                  </div>
-                ) : null}
-
-                {o.seller_update_message ? (
-                  <div className="rounded-2xl bg-base-200 p-4 text-sm">
-                    <div className="text-xs text-base-content/60 mb-1">Seller update</div>
-                    <div className="text-base-content/80">{o.seller_update_message}</div>
-                  </div>
-                ) : null}
-
-                {o.buyer_response_note ? (
-                  <div className="rounded-2xl bg-base-200 p-4 text-sm">
-                    <div className="text-xs text-base-content/60 mb-1">Your last response</div>
-                    <div className="text-base-content/80">{o.buyer_response_note}</div>
-                  </div>
-                ) : null}
-
-                {o.status === "SELLER_UPDATED" ? (
-                  <div className="flex flex-wrap gap-2">
-                    <button className="btn btn-success btn-sm" disabled={isBusy} onClick={() => reviewOrder(o.id, "accept")}>
-                      Accept
-                    </button>
-                    <button className="btn btn-error btn-sm" disabled={isBusy} onClick={() => reviewOrder(o.id, "reject")}>
-                      Reject
-                    </button>
-                  </div>
-                ) : null}
-
-                {o.status === "AWAITING_PAYMENT" ? (
-                  <div className="space-y-3 rounded-2xl border border-base-200 p-4">
-                    <div className="font-semibold">Payment info</div>
-                    <input
-                      className="input input-bordered w-full"
-                      placeholder="Full name"
-                      value={form.name}
-                      onChange={(e) => updatePaymentField(o.id, "name", e.target.value)}
-                    />
-                    <input
-                      className="input input-bordered w-full"
-                      placeholder="Phone"
-                      value={form.phone}
-                      onChange={(e) => updatePaymentField(o.id, "phone", e.target.value)}
-                    />
-                    <textarea
-                      className="textarea textarea-bordered w-full"
-                      rows={3}
-                      placeholder="Address"
-                      value={form.address}
-                      onChange={(e) => updatePaymentField(o.id, "address", e.target.value)}
-                    />
-                    <button className="btn btn-primary btn-sm" disabled={isBusy} onClick={() => payNow(o)}>
-                      {isBusy ? "Redirecting..." : "Pay Now"}
-                    </button>
-                  </div>
-                ) : null}
               </Card>
             );
           })}

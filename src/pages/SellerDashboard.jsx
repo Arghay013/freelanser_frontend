@@ -1,6 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../state/auth";
+import {
+  Briefcase,
+  CheckCircle2,
+  CircleDollarSign,
+  ClipboardList,
+  Clock3,
+  Package,
+  Plus,
+  Send,
+  Trash2,
+  XCircle,
+} from "lucide-react";
+
+const statusBadge = (status) => {
+  const s = String(status || "").toUpperCase();
+  if (s === "REQUESTED") return "badge-info";
+  if (s === "REQUEST_ACCEPTED") return "badge-primary";
+  if (s === "REQUEST_REJECTED") return "badge-error";
+  if (s === "SELLER_UPDATED") return "badge-secondary";
+  if (s === "CHANGES_REQUESTED") return "badge-warning";
+  if (s === "AWAITING_PAYMENT") return "badge-accent";
+  if (s === "IN_PROGRESS") return "badge-success";
+  if (s === "COMPLETED") return "badge-success";
+  return "badge-ghost";
+};
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -12,9 +37,12 @@ export default function SellerDashboard() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("programming");
+
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [busyId, setBusyId] = useState(null);
+
+  const [decisionTexts, setDecisionTexts] = useState({});
   const [updateTexts, setUpdateTexts] = useState({});
 
   const loadData = async () => {
@@ -38,6 +66,13 @@ export default function SellerDashboard() {
   useEffect(() => {
     loadData();
   }, [user?.username]);
+
+  const stats = useMemo(() => {
+    const requested = orders.filter((o) => String(o.status).toUpperCase() === "REQUESTED").length;
+    const inProgress = orders.filter((o) => String(o.status).toUpperCase() === "IN_PROGRESS").length;
+    const completed = orders.filter((o) => String(o.status).toUpperCase() === "COMPLETED").length;
+    return { requested, inProgress, completed };
+  }, [orders]);
 
   const addService = async () => {
     try {
@@ -81,6 +116,32 @@ export default function SellerDashboard() {
     }
   };
 
+  const decideRequest = async (orderId, action) => {
+    const note = (decisionTexts[orderId] || "").trim();
+
+    try {
+      setBusyId(orderId);
+      setError("");
+      setMsg("");
+
+      await api(`/api/orders/${orderId}/seller-decision/`, {
+        method: "PUT",
+        body: JSON.stringify({
+          action,
+          seller_update_message: note,
+        }),
+      });
+
+      setDecisionTexts((prev) => ({ ...prev, [orderId]: "" }));
+      setMsg(action === "accept" ? "Buyer request accepted" : "Buyer request rejected");
+      await loadData();
+    } catch (e) {
+      setError(e?.message || "Failed to update request");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const sendSellerUpdate = async (orderId) => {
     const message = (updateTexts[orderId] || "").trim();
     if (!message) return setError("Update message is required");
@@ -89,10 +150,12 @@ export default function SellerDashboard() {
       setBusyId(orderId);
       setError("");
       setMsg("");
+
       await api(`/api/orders/${orderId}/seller-update/`, {
         method: "PUT",
         body: JSON.stringify({ seller_update_message: message }),
       });
+
       setUpdateTexts((prev) => ({ ...prev, [orderId]: "" }));
       setMsg("Update sent to buyer");
       await loadData();
@@ -108,10 +171,12 @@ export default function SellerDashboard() {
       setBusyId(orderId);
       setError("");
       setMsg("");
+
       await api(`/api/orders/${orderId}/status/`, {
         method: "PUT",
         body: JSON.stringify({ status: "COMPLETED" }),
       });
+
       setMsg("Order marked as completed");
       await loadData();
     } catch (e) {
@@ -122,40 +187,100 @@ export default function SellerDashboard() {
   };
 
   return (
-    <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
-        <p className="text-base-content/70">Manage services and respond to buyer requests.</p>
+    <div className="mx-auto max-w-7xl px-4 py-10 space-y-8">
+      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold">Seller Dashboard</h1>
+          <p className="text-base-content/70">
+            Buyer request আসার পরে আগে accept বা reject করো, তারপর কাজের update পাঠাও।
+          </p>
+        </div>
       </div>
 
       {msg ? (
-        <div className="alert alert-success">
+        <div className="alert alert-success rounded-2xl">
           <span>{msg}</span>
         </div>
       ) : null}
 
       {error ? (
-        <div className="alert alert-error">
+        <div className="alert alert-error rounded-2xl">
           <span>{error}</span>
         </div>
       ) : null}
 
-      <div className="card bg-base-100 shadow p-5">
-        <h2 className="text-xl font-bold mb-4">Add Service</h2>
-        <div className="flex gap-4 items-end flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <label className="label"><span className="label-text">Title</span></label>
-            <input className="input input-bordered w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Service title" />
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-base-content/60">New requests</div>
+              <div className="mt-1 text-3xl font-extrabold">{stats.requested}</div>
+            </div>
+            <ClipboardList className="opacity-70" size={24} />
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-base-content/60">In progress</div>
+              <div className="mt-1 text-3xl font-extrabold">{stats.inProgress}</div>
+            </div>
+            <Clock3 className="opacity-70" size={24} />
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-base-content/60">Completed</div>
+              <div className="mt-1 text-3xl font-extrabold">{stats.completed}</div>
+            </div>
+            <CheckCircle2 className="opacity-70" size={24} />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-md space-y-5">
+        <div className="flex items-center gap-2">
+          <Plus size={20} />
+          <h2 className="text-xl font-bold">Add Service</h2>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-12">
+          <div className="md:col-span-5">
+            <label className="label">
+              <span className="label-text">Title</span>
+            </label>
+            <input
+              className="input input-bordered w-full"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Service title"
+            />
           </div>
 
-          <div className="w-40">
-            <label className="label"><span className="label-text">Price</span></label>
-            <input className="input input-bordered w-full" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="50" />
+          <div className="md:col-span-2">
+            <label className="label">
+              <span className="label-text">Price</span>
+            </label>
+            <input
+              className="input input-bordered w-full"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="50"
+            />
           </div>
 
-          <div className="w-52">
-            <label className="label"><span className="label-text">Category</span></label>
-            <select className="select select-bordered w-full" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <div className="md:col-span-3">
+            <label className="label">
+              <span className="label-text">Category</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
               <option value="programming">Programming</option>
               <option value="marketing">Marketing</option>
               <option value="video">Video Editing</option>
@@ -164,94 +289,210 @@ export default function SellerDashboard() {
             </select>
           </div>
 
-          <button className="btn btn-primary" onClick={addService}>Add</button>
+          <div className="md:col-span-2 flex items-end">
+            <button className="btn btn-primary w-full" onClick={addService}>
+              Add Service
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow p-5">
-        <h2 className="text-xl font-bold mb-4">Buyer Requests</h2>
+      <div className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-md space-y-5">
+        <div className="flex items-center gap-2">
+          <Package size={20} />
+          <h2 className="text-xl font-bold">Buyer Requests</h2>
+        </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="flex items-center gap-2 text-base-content/70">
+            <span className="loading loading-spinner loading-sm" />
+            Loading requests...
+          </div>
         ) : orders.length === 0 ? (
-          <p className="text-base-content/70">No buyer requests yet.</p>
+          <div className="rounded-2xl bg-base-200 p-5 text-base-content/70">No buyer requests yet.</div>
         ) : (
-          <div className="space-y-4">
-            {orders.map((o) => (
-              <div key={o.id} className="border border-base-200 rounded-2xl p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h3 className="font-bold">{o.service?.title}</h3>
-                    <p className="text-sm opacity-70">Buyer: {o.buyer?.username}</p>
+          <div className="grid gap-4">
+            {orders.map((o) => {
+              const isBusy = busyId === o.id;
+              const upperStatus = String(o.status || "").toUpperCase();
+
+              return (
+                <div
+                  key={o.id}
+                  className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm space-y-4"
+                >
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold">{o.service?.title || "Service"}</h3>
+                        <div className={`badge badge-outline ${statusBadge(o.status)} font-semibold`}>
+                          {o.status}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-sm text-base-content/70 space-y-1">
+                        <div>Buyer: <span className="font-medium text-base-content">{o.buyer?.username || "—"}</span></div>
+                        <div>Created: <span className="font-medium text-base-content">{o.created_at ? new Date(o.created_at).toLocaleString() : "—"}</span></div>
+                        <div>Price: <span className="font-medium text-base-content">${o.service?.price ?? "—"}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-base-200 px-4 py-3 text-sm text-base-content/70 max-w-md">
+                      <div className="font-semibold text-base-content mb-1">Current flow</div>
+                      <div>
+                        Request → Seller accept/reject → Seller update → Buyer accept/reject → Payment → Work complete
+                      </div>
+                    </div>
                   </div>
-                  <div className="badge badge-outline">{o.status}</div>
+
+                  {o.buyer_requirements ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="font-semibold mb-1">Buyer requirements</div>
+                      <div>{o.buyer_requirements}</div>
+                    </div>
+                  ) : null}
+
+                  {o.seller_update_message ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="font-semibold mb-1">
+                        {upperStatus === "REQUEST_REJECTED" ? "Rejection note" : "Last seller note / update"}
+                      </div>
+                      <div>{o.seller_update_message}</div>
+                    </div>
+                  ) : null}
+
+                  {o.buyer_response_note ? (
+                    <div className="rounded-2xl bg-base-200 p-4 text-sm">
+                      <div className="font-semibold mb-1">Buyer response note</div>
+                      <div>{o.buyer_response_note}</div>
+                    </div>
+                  ) : null}
+
+                  {upperStatus === "REQUESTED" ? (
+                    <div className="space-y-3 rounded-2xl border border-base-200 p-4">
+                      <div className="font-semibold">Accept or reject this buyer request</div>
+
+                      <textarea
+                        className="textarea textarea-bordered w-full"
+                        rows={3}
+                        placeholder="Optional note for buyer..."
+                        value={decisionTexts[o.id] || ""}
+                        onChange={(e) =>
+                          setDecisionTexts((prev) => ({ ...prev, [o.id]: e.target.value }))
+                        }
+                      />
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="btn btn-success btn-sm"
+                          disabled={isBusy}
+                          onClick={() => decideRequest(o.id, "accept")}
+                        >
+                          <CheckCircle2 size={16} />
+                          {isBusy ? "Please wait..." : "Accept Request"}
+                        </button>
+
+                        <button
+                          className="btn btn-error btn-sm"
+                          disabled={isBusy}
+                          onClick={() => decideRequest(o.id, "reject")}
+                        >
+                          <XCircle size={16} />
+                          {isBusy ? "Please wait..." : "Reject Request"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {["REQUEST_ACCEPTED", "CHANGES_REQUESTED"].includes(upperStatus) ? (
+                    <div className="space-y-3 rounded-2xl border border-base-200 p-4">
+                      <div className="font-semibold">
+                        {upperStatus === "REQUEST_ACCEPTED"
+                          ? "Request accepted. Now send your work/update to buyer."
+                          : "Buyer asked for changes. Send updated work again."}
+                      </div>
+
+                      <textarea
+                        className="textarea textarea-bordered w-full"
+                        rows={4}
+                        placeholder="Write your update for buyer..."
+                        value={updateTexts[o.id] || ""}
+                        onChange={(e) =>
+                          setUpdateTexts((prev) => ({ ...prev, [o.id]: e.target.value }))
+                        }
+                      />
+
+                      <button
+                        className="btn btn-primary btn-sm"
+                        disabled={isBusy}
+                        onClick={() => sendSellerUpdate(o.id)}
+                      >
+                        <Send size={16} />
+                        {isBusy ? "Sending..." : "Send Update"}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {upperStatus === "AWAITING_PAYMENT" ? (
+                    <div className="rounded-2xl border border-base-200 p-4 text-sm text-base-content/70">
+                      <div className="flex items-center gap-2 font-semibold text-base-content">
+                        <CircleDollarSign size={18} />
+                        Waiting for buyer payment
+                      </div>
+                      <div className="mt-2">
+                        Buyer accepted your update. Payment complete হলেই order automatically work stage-এ যাবে।
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {upperStatus === "IN_PROGRESS" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="btn btn-success btn-sm"
+                        disabled={isBusy}
+                        onClick={() => markCompleted(o.id)}
+                      >
+                        Mark Completed
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-
-                {o.buyer_requirements ? (
-                  <div className="rounded-xl bg-base-200 p-3 text-sm">
-                    <div className="font-semibold mb-1">Buyer requirements</div>
-                    <div>{o.buyer_requirements}</div>
-                  </div>
-                ) : null}
-
-                {o.seller_update_message ? (
-                  <div className="rounded-xl bg-base-200 p-3 text-sm">
-                    <div className="font-semibold mb-1">Last seller update</div>
-                    <div>{o.seller_update_message}</div>
-                  </div>
-                ) : null}
-
-                {o.buyer_response_note ? (
-                  <div className="rounded-xl bg-base-200 p-3 text-sm">
-                    <div className="font-semibold mb-1">Buyer response note</div>
-                    <div>{o.buyer_response_note}</div>
-                  </div>
-                ) : null}
-
-                {["REQUESTED", "CHANGES_REQUESTED"].includes(o.status) ? (
-                  <div className="space-y-2">
-                    <textarea
-                      className="textarea textarea-bordered w-full"
-                      rows={4}
-                      placeholder="Write your update for buyer..."
-                      value={updateTexts[o.id] || ""}
-                      onChange={(e) => setUpdateTexts((prev) => ({ ...prev, [o.id]: e.target.value }))}
-                    />
-                    <button className="btn btn-primary btn-sm" disabled={busyId === o.id} onClick={() => sendSellerUpdate(o.id)}>
-                      {busyId === o.id ? "Sending..." : "Send Update"}
-                    </button>
-                  </div>
-                ) : null}
-
-                {o.status === "IN_PROGRESS" ? (
-                  <button className="btn btn-success btn-sm" disabled={busyId === o.id} onClick={() => markCompleted(o.id)}>
-                    Mark Completed
-                  </button>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      <div className="card bg-base-100 shadow p-5">
-        <h2 className="text-xl font-bold mb-4">My Services</h2>
+      <div className="rounded-3xl border border-base-200 bg-base-100 p-6 shadow-md space-y-5">
+        <div className="flex items-center gap-2">
+          <Briefcase size={20} />
+          <h2 className="text-xl font-bold">My Services</h2>
+        </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="flex items-center gap-2 text-base-content/70">
+            <span className="loading loading-spinner loading-sm" />
+            Loading services...
+          </div>
         ) : services.length === 0 ? (
-          <p className="text-base-content/70">No services yet.</p>
+          <div className="rounded-2xl bg-base-200 p-5 text-base-content/70">No services yet.</div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {services.map((s) => (
-              <div key={s.id} className="card bg-base-200 shadow-sm p-4">
-                <div className="flex justify-between items-center gap-3">
+              <div key={s.id} className="rounded-3xl border border-base-200 bg-base-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-bold">{s.title}</h3>
-                    <p>${s.price}</p>
-                    <p className="text-sm opacity-70">{s.category}</p>
+                    <h3 className="text-lg font-bold">{s.title}</h3>
+                    <div className="mt-2 text-sm text-base-content/70 space-y-1">
+                      <div>Category: <span className="font-medium text-base-content">{s.category}</span></div>
+                      <div>Price: <span className="font-medium text-base-content">${s.price}</span></div>
+                    </div>
                   </div>
-                  <button className="btn btn-error btn-sm" onClick={() => deleteService(s.id)}>Delete</button>
+
+                  <button className="btn btn-error btn-sm" onClick={() => deleteService(s.id)}>
+                    <Trash2 size={16} />
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
