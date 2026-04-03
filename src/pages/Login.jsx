@@ -31,14 +31,14 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-12">
-      <div className="card bg-base-100 shadow border border-base-200">
+      <div className="card bg-base-100 shadow-xl border border-base-200 rounded-3xl">
         <div className="card-body gap-5">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
               <LogIn className="text-primary" size={18} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Welcome back</h1>
+              <h1 className="text-2xl font-bold text-base-content">Welcome back</h1>
               <p className="text-sm text-base-content/70">
                 Login with your username & password.
               </p>
@@ -49,9 +49,9 @@ export default function Login() {
 
           <form className="space-y-3" onSubmit={onSubmit}>
             <label className="form-control">
-              <div className="label"><span className="label-text">Username</span></div>
+              <div className="label"><span className="label-text font-medium">Username</span></div>
               <input
-                className="input input-bordered"
+                className="input input-bordered bg-base-100"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -61,10 +61,10 @@ export default function Login() {
             </label>
 
             <label className="form-control">
-              <div className="label"><span className="label-text">Password</span></div>
+              <div className="label"><span className="label-text font-medium">Password</span></div>
               <input
                 type="password"
-                className="input input-bordered"
+                className="input input-bordered bg-base-100"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -73,7 +73,7 @@ export default function Login() {
               />
             </label>
 
-            <button className="btn btn-primary w-full" disabled={loading}>
+            <button className="btn btn-primary w-full shadow-sm" disabled={loading}>
               {loading ? (
                 <>
                   <span className="loading loading-spinner loading-sm" />

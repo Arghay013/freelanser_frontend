@@ -20,9 +20,9 @@ import { useAuth } from "./state/auth";
 function NotFound() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <div className="card bg-base-100 shadow border border-base-200">
+      <div className="card bg-base-100 shadow-lg border border-base-200 rounded-3xl">
         <div className="card-body">
-          <h1 className="text-2xl font-bold">404 — Page not found</h1>
+          <h1 className="text-2xl font-bold text-base-content">404 — Page not found</h1>
           <p className="text-base-content/70 mt-2">
             This route doesn’t exist. Check the URL or use the menu.
           </p>
@@ -39,7 +39,7 @@ function RequireAuth({ children, role }) {
   if (booting) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="card bg-base-100 shadow border border-base-200">
+        <div className="card bg-base-100 shadow-lg border border-base-200 rounded-3xl">
           <div className="card-body">
             <div className="flex items-center gap-2 text-base-content/70">
               <span className="loading loading-spinner loading-sm" />
@@ -66,12 +66,11 @@ function RequireAuth({ children, role }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-base-200/70">
+    <div className="min-h-screen bg-base-200 text-base-content">
       <Navbar />
 
       <main className="min-h-[70vh] py-6">
         <Routes>
-          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetail />} />
@@ -80,12 +79,10 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify" element={<Verify />} />
 
-          {/* Payment result (public) */}
           <Route path="/payment/success" element={<PaymentResult status="success" />} />
           <Route path="/payment/fail" element={<PaymentResult status="fail" />} />
           <Route path="/payment/cancel" element={<PaymentResult status="cancel" />} />
 
-          {/* Protected */}
           <Route
             path="/buyer"
             element={
@@ -127,7 +124,6 @@ export default function App() {
             }
           />
 
-          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -19,13 +19,9 @@ const ENDPOINTS = {
 export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-
-  // backend expects BUYER / SELLER
   const [role, setRole] = useState("BUYER");
   const [password, setPassword] = useState("");
-
   const [showPass, setShowPass] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -64,31 +60,24 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-160px)] bg-base-200/70">
+    <div className="min-h-[calc(100vh-160px)] bg-base-200">
       <div className="relative max-w-6xl mx-auto px-4 py-10">
-        {/* Soft background blobs */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-secondary/15 blur-3xl" />
-        </div>
-
         <div className="relative grid lg:grid-cols-2 gap-6 items-stretch">
-          {/* Left panel */}
           <div className="hidden lg:flex">
-            <div className="w-full rounded-3xl border border-base-200 bg-base-100 shadow-md shadow-black/10 p-10">
+            <div className="w-full rounded-[2rem] border border-base-200 bg-base-100 shadow-xl p-10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-blue-500 flex items-center justify-center shadow-md">
-                  <span className="text-white font-extrabold">FH</span>
+                <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-sm">
+                  <span className="text-primary-content font-extrabold">FH</span>
                 </div>
                 <div>
-                  <div className="text-xl font-extrabold leading-tight">FreelancerHub</div>
+                  <div className="text-xl font-extrabold leading-tight text-base-content">FreelancerHub</div>
                   <div className="text-sm text-base-content/60 -mt-0.5">
                     Hire & sell services
                   </div>
                 </div>
               </div>
 
-              <h1 className="mt-8 text-4xl font-extrabold leading-tight">
+              <h1 className="mt-8 text-4xl font-extrabold leading-tight text-base-content">
                 Create your account and start shipping.
               </h1>
               <p className="mt-3 text-base-content/70 max-w-md">
@@ -96,24 +85,24 @@ export default function Register() {
               </p>
 
               <div className="mt-8 grid gap-3">
-                <div className="flex items-start gap-3 rounded-2xl bg-base-200 p-4">
-                  <div className="mt-0.5">
-                    <ShieldCheck size={18} className="opacity-80" />
+                <div className="flex items-start gap-3 rounded-2xl bg-base-200 p-4 border border-base-200">
+                  <div className="mt-0.5 text-primary">
+                    <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <div className="font-semibold">Email verification</div>
+                    <div className="font-semibold text-base-content">Email verification</div>
                     <div className="text-sm text-base-content/70">
                       Only verified users can log in — safer marketplace.
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-2xl bg-base-200 p-4">
-                  <div className="mt-0.5">
-                    <Sparkles size={18} className="opacity-80" />
+                <div className="flex items-start gap-3 rounded-2xl bg-base-200 p-4 border border-base-200">
+                  <div className="mt-0.5 text-secondary">
+                    <Sparkles size={18} />
                   </div>
                   <div>
-                    <div className="font-semibold">Role-based dashboards</div>
+                    <div className="font-semibold text-base-content">Role-based dashboards</div>
                     <div className="text-sm text-base-content/70">
                       Buyer & Seller have dedicated dashboards and tools.
                     </div>
@@ -130,13 +119,12 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Right form */}
           <div className="flex">
-            <div className="w-full rounded-3xl border border-base-200 bg-base-100 shadow-md shadow-black/10">
+            <div className="w-full rounded-[2rem] border border-base-200 bg-base-100 shadow-xl">
               <div className="p-6 sm:p-10">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-3xl font-extrabold">Create account</h2>
+                    <h2 className="text-3xl font-extrabold text-base-content">Create account</h2>
                     <p className="mt-1 text-base-content/70">
                       We’ll send a verification email. Only verified users can login.
                     </p>
@@ -160,7 +148,6 @@ export default function Register() {
                 ) : null}
 
                 <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-                  {/* Username */}
                   <label className="form-control">
                     <div className="label">
                       <span className="label-text font-medium">Username</span>
@@ -170,7 +157,7 @@ export default function Register() {
                         <User size={18} />
                       </span>
                       <input
-                        className="input input-bordered h-12 w-full pl-10"
+                        className="input input-bordered h-12 w-full pl-10 bg-base-100"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="e.g. myname"
@@ -180,7 +167,6 @@ export default function Register() {
                     </div>
                   </label>
 
-                  {/* Email */}
                   <label className="form-control">
                     <div className="label">
                       <span className="label-text font-medium">Email</span>
@@ -190,7 +176,7 @@ export default function Register() {
                         <Mail size={18} />
                       </span>
                       <input
-                        className="input input-bordered h-12 w-full pl-10"
+                        className="input input-bordered h-12 w-full pl-10 bg-base-100"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -201,14 +187,13 @@ export default function Register() {
                     </div>
                   </label>
 
-                  {/* Role + Password */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <label className="form-control">
                       <div className="label">
                         <span className="label-text font-medium">Role</span>
                       </div>
                       <select
-                        className="select select-bordered h-12"
+                        className="select select-bordered h-12 bg-base-100"
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                       >
@@ -226,7 +211,7 @@ export default function Register() {
                           <Lock size={18} />
                         </span>
                         <input
-                          className="input input-bordered h-12 w-full pl-10 pr-12"
+                          className="input input-bordered h-12 w-full pl-10 pr-12 bg-base-100"
                           type={showPass ? "text" : "password"}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -248,7 +233,7 @@ export default function Register() {
                   </div>
 
                   <button
-                    className="btn btn-primary w-full h-12 text-base"
+                    className="btn btn-primary w-full h-12 text-base shadow-sm"
                     disabled={loading}
                   >
                     {loading ? (
@@ -281,7 +266,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* bottom bar */}
               <div className="border-t border-base-200 px-6 sm:px-10 py-4 text-xs text-base-content/60">
                 Tip: Use a real email so you can verify and access dashboards.
               </div>
@@ -289,7 +273,6 @@ export default function Register() {
           </div>
         </div>
 
-        {/* Mobile hint */}
         <div className="lg:hidden mt-6 text-center text-sm text-base-content/70">
           Already have an account?{" "}
           <Link to="/login" className="link link-primary font-medium">

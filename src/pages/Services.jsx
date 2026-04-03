@@ -32,7 +32,7 @@ export default function Services() {
 
   const [q, setQ] = useState("");
   const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState("info"); // info | success | error
+  const [msgType, setMsgType] = useState("info");
 
   const role = user?.role || user?.profile?.role;
 
@@ -91,14 +91,14 @@ export default function Services() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold">Services</h1>
+          <h1 className="text-3xl font-extrabold text-base-content">Services</h1>
           <p className="text-base-content/70 mt-1">
             Browse services and checkout securely via SSLCOMMERZ.
           </p>
         </div>
 
         <div className="w-full md:w-[420px]">
-          <label className="input input-bordered flex items-center gap-2 w-full">
+          <label className="input input-bordered flex items-center gap-2 w-full bg-base-100 shadow-sm">
             <Search size={16} className="opacity-60" />
             <input
               value={q}
@@ -131,25 +131,24 @@ export default function Services() {
           </Card>
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((s) => {
             const imgSrc = s.image || s.thumbnail || s.image_url || FALLBACK_IMG;
 
             return (
               <div
                 key={s.id}
-                className="card bg-base-100 shadow border border-base-200"
+                className="card bg-base-100 shadow-md hover:shadow-xl transition-all duration-200 border border-base-200 rounded-3xl overflow-hidden"
               >
                 <div className="card-body">
                   <div className="flex items-center justify-between">
                     <span className="badge badge-outline">{s.category || "—"}</span>
-                    <span className="badge badge-primary badge-outline">
+                    <span className="badge badge-primary">
                       <Star size={14} className="mr-1" />
                       {s.avg_rating ? Number(s.avg_rating).toFixed(1) : "New"}
                     </span>
                   </div>
 
-                  {/* Thumbnail */}
                   <div className="rounded-2xl overflow-hidden border border-base-200 mt-3">
                     <img
                       src={imgSrc}
@@ -157,7 +156,6 @@ export default function Services() {
                       className="w-full h-40 object-cover"
                       loading="lazy"
                       onError={(e) => {
-                        // prevent infinite loop
                         if (e.currentTarget.src !== FALLBACK_IMG) {
                           e.currentTarget.src = FALLBACK_IMG;
                         }
@@ -165,7 +163,7 @@ export default function Services() {
                     />
                   </div>
 
-                  <h2 className="card-title mt-3">{s.title}</h2>
+                  <h2 className="card-title mt-3 text-base-content">{s.title}</h2>
                   <p className="text-sm text-base-content/70 line-clamp-3">
                     {s.description || "—"}
                   </p>
@@ -182,17 +180,17 @@ export default function Services() {
                   <div className="mt-4 flex items-center justify-between">
                     <div>
                       <div className="text-xs text-base-content/60">Starting at</div>
-                      <div className="text-2xl font-extrabold">${s.price}</div>
+                      <div className="text-2xl font-extrabold text-primary">${s.price}</div>
                     </div>
 
                     <div className="flex gap-2">
-                      <Link to={`/services/${s.id}`} className="btn btn-ghost btn-sm">
+                      <Link to={`/services/${s.id}`} className="btn btn-ghost btn-sm hover:bg-base-200">
                         Details
                       </Link>
 
                       <button
                         onClick={() => goCheckout(s.id)}
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm shadow-sm"
                         title="Buy (Checkout)"
                       >
                         <ShoppingCart size={16} />

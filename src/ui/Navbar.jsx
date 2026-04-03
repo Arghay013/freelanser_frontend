@@ -1,6 +1,15 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/auth";
-import { Briefcase, Bell, LogIn, UserPlus, User, LogOut, Menu, LayoutDashboard } from "lucide-react";
+import {
+  Briefcase,
+  Bell,
+  LogIn,
+  UserPlus,
+  User,
+  LogOut,
+  Menu,
+  LayoutDashboard,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 const NavItem = ({ to, icon: Icon, children }) => (
@@ -8,12 +17,14 @@ const NavItem = ({ to, icon: Icon, children }) => (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `rounded-xl px-3 py-2 flex items-center gap-2 transition ${
-          isActive ? "bg-base-200 font-semibold" : "hover:bg-base-200/70"
+        `rounded-xl px-3 py-2 flex items-center gap-2 transition-all duration-200 ${
+          isActive
+            ? "bg-primary text-primary-content font-semibold shadow-sm"
+            : "text-base-content/80 hover:bg-base-200 hover:text-base-content"
         }`
       }
     >
-      {Icon ? <Icon size={16} className="opacity-80" /> : null}
+      {Icon ? <Icon size={16} className="opacity-90" /> : null}
       <span>{children}</span>
     </NavLink>
   </li>
@@ -24,7 +35,6 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const [dark, setDark] = useState(false);
 
-  // ✅ dashboard route based on role
   const dashboardPath =
     user?.role === "BUYER" ? "/buyer" : user?.role === "SELLER" ? "/seller" : "/profile";
 
@@ -43,60 +53,49 @@ export default function Navbar() {
   };
 
   return (
-    <div className="sticky top-0 z-50 border-b border-base-200 bg-base-100/85 backdrop-blur">
+    <div className="sticky top-0 z-50 border-b border-base-200/80 bg-base-100/90 backdrop-blur-md shadow-sm">
       <div className="navbar max-w-6xl mx-auto px-4">
-        {/* Left */}
         <div className="navbar-start gap-2">
-          {/* Mobile menu */}
           <div className="dropdown lg:hidden">
-            <label tabIndex={0} className="btn btn-ghost btn-square">
+            <label tabIndex={0} className="btn btn-ghost btn-square hover:bg-base-200">
               <Menu size={20} />
             </label>
 
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content mt-3 w-60 rounded-box bg-base-100 p-2 shadow border border-base-200"
+              className="menu menu-sm dropdown-content mt-3 w-60 rounded-2xl bg-base-100 p-2 shadow-xl border border-base-200"
             >
               <NavItem to="/services" icon={Briefcase}>Services</NavItem>
-
               {user && <NavItem to={dashboardPath} icon={LayoutDashboard}>Dashboard</NavItem>}
               {user && <NavItem to="/notifications" icon={Bell}>Notifications</NavItem>}
               {user && <NavItem to="/profile" icon={User}>Profile</NavItem>}
-
               {!user && <NavItem to="/login" icon={LogIn}>Login</NavItem>}
               {!user && <NavItem to="/register" icon={UserPlus}>Register</NavItem>}
             </ul>
           </div>
 
-          {/* Brand */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-sky-500 flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg tracking-wide">FH</span>
+            <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-md">
+              <span className="text-primary-content font-bold text-lg tracking-wide">FH</span>
             </div>
 
             <div className="leading-tight">
-              <div className="font-bold text-lg tracking-tight">FreelancerHub</div>
+              <div className="font-bold text-lg tracking-tight text-base-content">FreelancerHub</div>
               <div className="text-xs text-base-content/60 -mt-1">Hire & sell services</div>
             </div>
           </Link>
         </div>
 
-        {/* Center (desktop menu) */}
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal gap-1 px-1">
             <NavItem to="/services" icon={Briefcase}>Services</NavItem>
-
-            {/* ✅ DASHBOARD BUTTON (Desktop) */}
             {user && <NavItem to={dashboardPath} icon={LayoutDashboard}>Dashboard</NavItem>}
-
             {user && <NavItem to="/notifications" icon={Bell}>Notifications</NavItem>}
           </ul>
         </div>
 
-        {/* Right */}
         <div className="navbar-end gap-2">
-          {/* Theme toggle */}
-          <label className="btn btn-ghost btn-circle" title="Toggle theme">
+          <label className="btn btn-ghost btn-circle hover:bg-base-200" title="Toggle theme">
             <input
               type="checkbox"
               className="toggle toggle-sm"
@@ -107,21 +106,21 @@ export default function Navbar() {
 
           {!user ? (
             <>
-              <Link className="btn btn-ghost hidden sm:flex" to="/login">
+              <Link className="btn btn-ghost hidden sm:flex hover:bg-base-200" to="/login">
                 <LogIn size={16} className="mr-1" />
                 Login
               </Link>
-              <Link className="btn btn-primary" to="/register">
+              <Link className="btn btn-primary shadow-sm" to="/register">
                 <UserPlus size={16} className="mr-1" />
                 Register
               </Link>
             </>
           ) : (
             <div className="dropdown dropdown-end">
-              <label tabIndex={0} className="btn btn-ghost rounded-full">
+              <label tabIndex={0} className="btn btn-ghost rounded-full hover:bg-base-200">
                 <div className="flex items-center gap-2">
                   <div className="avatar placeholder">
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white rounded-full w-9 shadow-md">
+                    <div className="bg-primary text-primary-content rounded-full w-9 shadow-sm">
                       <span className="text-sm font-semibold">
                         {(user?.username || "U").slice(0, 1).toUpperCase()}
                       </span>
@@ -137,9 +136,8 @@ export default function Navbar() {
 
               <ul
                 tabIndex={0}
-                className="menu dropdown-content mt-3 w-56 rounded-box bg-base-100 p-2 shadow border border-base-200"
+                className="menu dropdown-content mt-3 w-56 rounded-2xl bg-base-100 p-2 shadow-xl border border-base-200"
               >
-                {/* ✅ Dashboard inside dropdown too */}
                 <li>
                   <button onClick={() => navigate(dashboardPath)}>
                     <LayoutDashboard size={16} className="opacity-80" /> Dashboard
