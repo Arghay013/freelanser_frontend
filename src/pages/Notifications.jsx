@@ -38,7 +38,6 @@ export default function Notifications() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.username]);
 
   const filtered = useMemo(() => {
@@ -46,8 +45,8 @@ export default function Notifications() {
     if (!s) return items;
 
     return items.filter((n) => {
-      const t = String(n.ntype || "").toLowerCase();     // ✅ backend field
-      const m = String(n.message || "").toLowerCase();   // ✅ backend field
+      const t = String(n.ntype || "").toLowerCase();
+      const m = String(n.message || "").toLowerCase();
       return t.includes(s) || m.includes(s);
     });
   }, [items, q]);
@@ -64,45 +63,47 @@ export default function Notifications() {
   };
 
   if (!user) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-12 text-base-content/70">
-        Please login.
-      </div>
-    );
+    return <div className="mx-auto max-w-6xl px-4 py-12 text-base-content/70">Please login.</div>;
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 space-y-5">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-extrabold">Notifications</h1>
-          <p className="text-base-content/70">Your latest updates and system messages.</p>
-        </div>
-        <div className="badge badge-outline">
-          <BellRing size={14} className="mr-1" />
-          {unreadCount} unread / {items.length} total
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 py-12 space-y-6">
+      <section className="rounded-[32px] border border-base-200 bg-base-100 p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+              <BellRing size={15} /> Notification center
+            </div>
+            <h1 className="mt-4 text-4xl font-black text-base-content">Notifications</h1>
+            <p className="mt-2 text-base-content/70">View updates, search messages, and mark unread items as read.</p>
+          </div>
 
-      <div className="join w-full">
-        <div className="join-item btn btn-ghost pointer-events-none">
-          <Search size={16} />
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-[22px] border border-base-200 bg-base-200/70 px-5 py-4">
+              <div className="text-xs uppercase tracking-wide text-base-content/55">Unread</div>
+              <div className="mt-1 text-3xl font-black text-base-content">{unreadCount}</div>
+            </div>
+            <div className="rounded-[22px] border border-base-200 bg-base-200/70 px-5 py-4">
+              <div className="text-xs uppercase tracking-wide text-base-content/55">Total</div>
+              <div className="mt-1 text-3xl font-black text-base-content">{items.length}</div>
+            </div>
+          </div>
         </div>
-        <input
-          className="join-item input input-bordered w-full"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search notifications..."
-        />
-      </div>
 
-      {msg ? (
-        <div className="alert alert-error">
-          <span>{msg}</span>
+        <div className="mt-6 flex h-14 items-center gap-3 rounded-[22px] border border-base-200 bg-base-100 px-4 shadow-sm">
+          <Search size={18} className="opacity-60" />
+          <input
+            className="h-full w-full bg-transparent outline-none"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search notifications..."
+          />
         </div>
-      ) : null}
+      </section>
 
-      <div className="grid gap-3">
+      {msg ? <div className="alert alert-error"><span>{msg}</span></div> : null}
+
+      <div className="grid gap-4">
         {loading ? (
           <Card>
             <div className="flex items-center gap-2 text-base-content/70">
@@ -110,53 +111,39 @@ export default function Notifications() {
               Loading notifications...
             </div>
           </Card>
-        ) : (
-          <>
-            {filtered.map((n) => (
-              <Card
-                key={n.id}
-                className={`hover:shadow-md transition ${
-                  n.is_read ? "" : "border border-primary/40"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    {/* ✅ ntype দেখাও */}
-                    <div className="font-semibold">
-                      {n.ntype || "NOTIFICATION"}
-                      {!n.is_read && <span className="badge badge-primary badge-sm ml-2">NEW</span>}
-                    </div>
-
-                    {/* ✅ message দেখাও */}
-                    <div className="text-sm text-base-content/70 mt-1">
-                      {n.message || "—"}
-                    </div>
-
-                    <div className="text-xs text-base-content/60 mt-3">
-                      {n.created_at ? new Date(n.created_at).toLocaleString() : ""}
-                    </div>
+        ) : filtered.length > 0 ? (
+          filtered.map((n) => (
+            <Card key={n.id} className={`${n.is_read ? "" : "border-primary/30 shadow-md"}`}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-base font-bold text-base-content">{n.ntype || "NOTIFICATION"}</div>
+                    {!n.is_read ? <span className="badge badge-primary rounded-full border-none">New</span> : null}
                   </div>
 
-                  {/* ✅ mark read button */}
-                  {!n.is_read ? (
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => markRead(n.id)}
-                      title="Mark as read"
-                    >
-                      <CheckCircle2 size={16} />
-                    </button>
-                  ) : null}
-                </div>
-              </Card>
-            ))}
+                  <div className="mt-2 text-sm leading-7 text-base-content/72 break-words">{n.message || "—"}</div>
 
-            {filtered.length === 0 && (
-              <Card>
-                <div className="text-base-content/70">No notifications found.</div>
-              </Card>
-            )}
-          </>
+                  <div className="mt-4 text-xs text-base-content/55">
+                    {n.created_at ? new Date(n.created_at).toLocaleString() : ""}
+                  </div>
+                </div>
+
+                {!n.is_read ? (
+                  <button
+                    className="btn btn-outline btn-sm rounded-2xl"
+                    onClick={() => markRead(n.id)}
+                    title="Mark as read"
+                  >
+                    <CheckCircle2 size={16} /> Mark read
+                  </button>
+                ) : null}
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <div className="py-3 text-center text-base-content/70">No notifications found.</div>
+          </Card>
         )}
       </div>
     </div>
